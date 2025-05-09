@@ -4,7 +4,13 @@ import { Prisma } from "@prisma/client";
 
 export async function GET() {
     try {
-        const consum = await prisma.consum.findMany();
+        const consum = await prisma.consum.findMany({
+            include: {
+                gestiune: true,
+                liniiConsum: true,
+                sef: true
+            }
+        });
         return NextResponse.json(consum, { status: 200 });
     } catch (error) {
         console.log(error);

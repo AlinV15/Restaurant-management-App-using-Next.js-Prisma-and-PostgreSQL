@@ -35,12 +35,16 @@ interface ConsumTableProps {
 const ConsumTable: React.FC<ConsumTableProps> = ({ consum }) => {
     const router = useRouter();
 
+
     // State pentru sortare și interfață
     const [sortField, setSortField] = useState<keyof Consum>('id_consum');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
     const [hoveredRow, setHoveredRow] = useState<number | null>(null);
     const [activeDropdown, setActiveDropdown] = useState<number | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    //fct 
+    const [viewMode, setViewMode] = useState(true)
 
     // Funcție pentru formatarea datei
     const formatDate = (dateInput: Date | string): string => {
@@ -111,14 +115,23 @@ const ConsumTable: React.FC<ConsumTableProps> = ({ consum }) => {
         }
     };
 
+    const goToPage = (slug: number, isView: boolean) => {
+        router.push(`/consum/${slug}?view=${isView}`);
+    };
+
+
     // Funcție pentru vizualizarea detaliată a consumului
     const viewConsum = (id: number) => {
-        router.push(`/consum/${id}`);
+        setViewMode(true)
+        // goToPage(id, viewMode)
+        router.push(`/consum/${id}?view=${true}`);
     };
 
     // Funcție pentru editarea consumului
     const editConsum = (id: number) => {
-        router.push(`/consum/editare/${id}`);
+        setViewMode(false)
+        // goToPage(id, viewMode)
+        router.push(`/consum/${id}?view=${false}`);
     };
 
     // Funcție pentru ștergerea consumului
