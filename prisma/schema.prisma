@@ -17,6 +17,8 @@ model Document {
   // Relații de moștenire implementate prin one-to-one
   consum              Consum?
   cerereAprovizionare CerereAprovizionare?
+receptie Receptie?
+
 }
 
 model Angajati {
@@ -120,6 +122,7 @@ model Receptie {
   data           DateTime         @default(now())
   valoare_totala Decimal          @default(0.0)
   linii_receptie Linie_receptie[]
+ document       Document         @relation(fields: [id_receptie], references: [nr_document])
 }
 
 model Linie_receptie {
