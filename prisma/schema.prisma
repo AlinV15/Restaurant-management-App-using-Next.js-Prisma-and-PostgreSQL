@@ -58,6 +58,11 @@ model CerereAprovizionare {
   gestiune    Gestiune                   @relation(fields: [id_gestiune], references: [id_gestiune])
   liniiCerere LinieCerereAprovizionare[]
 }
+enum StatusCerere {
+  IN_ASTEPTARE
+  APROBAT
+  FINALIZAT
+}
 
 // Restul modelelor rămân neschimbate
 model Stoc {
