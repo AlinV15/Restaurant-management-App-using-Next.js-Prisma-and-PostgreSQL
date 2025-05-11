@@ -17,7 +17,7 @@ model Document {
   // Relații de moștenire implementate prin one-to-one
   consum              Consum?
   cerereAprovizionare CerereAprovizionare?
-receptie Receptie?
+  receptie Receptie?
 
 }
 
