@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import Sidebar from '../components/Sidebar'
 import ConsumChart from '../components/ConsumGrafic';
 import ConsumTable from '../components/ConsumTable';
+import ReportDialog from '@/app/components/ReportDialog';
 
 // Interfețe pentru modele
 interface Angajat {
@@ -25,10 +26,10 @@ interface Consum {
     id_consum: number,
     valoare: number,
     data: Date,
-    id_sef: number,  // Modificat pentru a reflecta structura înainte de JOIN
-    id_gestiune: number,  // Modificat pentru a reflecta structura înainte de JOIN
-    sef?: Angajat,  // Opțional, dacă relația nu este încărcată
-    gestiune?: Gestiune  // Opțional, dacă relația nu este încărcată
+    id_sef: number,
+    id_gestiune: number,
+    sef?: Angajat,
+    gestiune?: Gestiune
 }
 
 interface Bun {
@@ -59,6 +60,7 @@ const Page = () => {
     const [gestiuni, setGestiuni] = useState<Gestiune[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(false);
+    const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
     const now = new Date();
 
@@ -147,6 +149,16 @@ const Page = () => {
         });
     }, [liniiConsum, bunuri]);
 
+    // Deschide dialogul pentru raport
+    const openReportDialog = () => {
+        setIsReportDialogOpen(true);
+    };
+
+    // Închide dialogul pentru raport
+    const closeReportDialog = () => {
+        setIsReportDialogOpen(false);
+    };
+
     // Preluăm datele când se încarcă pagina
     useEffect(() => {
         fetchData();
@@ -183,12 +195,11 @@ const Page = () => {
     }
 
     return (
-        <div className='bg-white flex '>
+        <div className='bg-white flex'>
             <div className='w-1/4'>
                 <Sidebar />
             </div>
             <div className='w-4/5 flex flex-col p-5 text-black'>
-
                 {/* Titlul paginii */}
                 <h1 className="text-2xl font-bold mb-2">Gestionare Consum</h1>
                 <div className="h-px w-full bg-gray-900 mt-2 mb-4"></div>
@@ -204,14 +215,36 @@ const Page = () => {
                 </div>
 
                 {/* Tabelul - ocupă restul spațiului */}
-                <div >
-                    <h2 className="text-xl font-semibold mb-4">Lista Consumuri</h2>
+                <div>
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-semibold">Lista Consumuri</h2>
+                        <button
+                            onClick={openReportDialog}
+                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Generează Raport
+                        </button>
+                    </div>
+
                     {processedConsumuri.length > 0 ? (
                         <ConsumTable consum={processedConsumuri} />
                     ) : (
                         <p>Nu există consumuri disponibile</p>
                     )}
                 </div>
+
+                {/* Dialog pentru raport */}
+                {isReportDialogOpen && (
+                    <ReportDialog
+                        isOpen={isReportDialogOpen}
+                        onClose={closeReportDialog}
+                        gestiuni={gestiuni}
+                        bunuri={bunuri}
+                    />
+                )}
             </div>
         </div>
     )

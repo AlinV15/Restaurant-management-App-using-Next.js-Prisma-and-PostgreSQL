@@ -17,8 +17,7 @@ model Document {
   // Relații de moștenire implementate prin one-to-one
   consum              Consum?
   cerereAprovizionare CerereAprovizionare?
-receptie Receptie?
-
+  receptie            Receptie?
 }
 
 model Angajati {
@@ -58,11 +57,12 @@ model CerereAprovizionare {
   gestiune    Gestiune                   @relation(fields: [id_gestiune], references: [id_gestiune])
   liniiCerere LinieCerereAprovizionare[]
 }
-enum StatusCerere {
-  IN_ASTEPTARE
-  APROBAT
-  FINALIZAT
-}
+
+// enum StatusCerere {
+//   IN_ASTEPTARE
+//   APROBAT
+//   FINALIZAT
+// }
 
 // Restul modelelor rămân neschimbate
 model Stoc {
@@ -127,7 +127,7 @@ model Receptie {
   data           DateTime         @default(now())
   valoare_totala Decimal          @default(0.0)
   linii_receptie Linie_receptie[]
- document       Document         @relation(fields: [id_receptie], references: [nr_document])
+  document       Document         @relation(fields: [id_receptie], references: [nr_document])
 }
 
 model Linie_receptie {

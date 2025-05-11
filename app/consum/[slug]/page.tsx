@@ -768,7 +768,7 @@ const page = ({ params }: { params: ConsumParams }) => {
                                     {
                                         consumAnterior ?
                                             (
-                                                <Link href={`/consum/${consumAnterior.id_consum}`} className="bg-neutral-600 text-white px-6 py-2.5 rounded-full flex items-center gap-2 hover:bg-neutral-700 transition-colors shadow hover:shadow-md"><ArrowLeftFromLine /></Link>
+                                                <Link href={`/consum/${consumAnterior.id_consum}?view=${true}`} className="bg-neutral-600 text-white px-6 py-2.5 rounded-full flex items-center gap-2 hover:bg-neutral-700 transition-colors shadow hover:shadow-md"><ArrowLeftFromLine /></Link>
                                             ) : null
                                     }
                                     <div className='flex gap-5'>
@@ -803,7 +803,7 @@ const page = ({ params }: { params: ConsumParams }) => {
                                     </div>
                                     {
                                         consumUrmator ? (
-                                            <Link href={`/consum/${consumUrmator.id_consum}`} className="bg-neutral-600 text-white px-6 py-2.5 rounded-full flex items-center gap-2 hover:bg-neutral-700 transition-colors shadow hover:shadow-md"><ArrowRightFromLine /></Link>
+                                            <Link href={`/consum/${consumUrmator.id_consum}?view=${true}`} className="bg-neutral-600 text-white px-6 py-2.5 rounded-full flex items-center gap-2 hover:bg-neutral-700 transition-colors shadow hover:shadow-md"><ArrowRightFromLine /></Link>
                                         ) : null
                                     }
                                 </div>
