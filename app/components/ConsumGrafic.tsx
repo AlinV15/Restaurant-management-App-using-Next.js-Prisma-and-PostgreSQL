@@ -11,67 +11,33 @@ import {
     ResponsiveContainer,
     Cell
 } from 'recharts';
-
-// Definim interfețele pentru modelele tale
-interface Bun {
-    id_bun: number;
-    nume_bun: string;
-    cantitate_disponibila: number;
-    pret_unitar: number;
-    data_expirare?: Date;
-    unitate_masura: string;
-}
-
-interface LinieConsum {
-    id_linie_consum: number;
-    id_consum: number;
-    id_bun: number;
-    cantitate_necesara: number;
-    valoare: number;
-    cant_eliberata: number;
-    bun: Bun;
-}
+import { LinieConsum, Bun } from '../store/consumStore';
 
 interface ConsumChartProps {
     liniiConsum: LinieConsum[];
 }
 
 const ConsumChart: React.FC<ConsumChartProps> = ({ liniiConsum }) => {
-    // Array de culori atractive pentru grafice
     const colorPalette = [
-        '#FF6384', // roz
-        '#36A2EB', // albastru
-        '#FFCE56', // galben
-        '#4BC0C0', // turcoaz
-        '#9966FF', // mov
-        '#FF9F40', // portocaliu
-        '#C9CBCF', // gri
-        '#7BC043', // verde
-        '#F37736', // portocaliu întunecat
-        '#FFC857', // galben deschis
-        '#41B3A3', // verde mentă
-        '#E27D60', // coral
-        '#85DCBA', // verde pal
-        '#E8A87C', // piersică
-        '#C38D9E', // roz închis
-        '#8D8741', // olive
-        '#659DBD', // albastru deschis
-        '#DAAD86', // bej
-        '#BC986A', // maro deschis
-        '#FBEEC1'  // crem
+        '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+        '#FF9F40', '#C9CBCF', '#7BC043', '#F37736', '#FFC857',
+        '#41B3A3', '#E27D60', '#85DCBA', '#E8A87C', '#C38D9E',
+        '#8D8741', '#659DBD', '#DAAD86', '#BC986A', '#FBEEC1'
     ];
 
-    // Procesarea datelor pentru grafic
     const processDataForChart = () => {
         const groupedData: Record<string, number> = {};
 
         liniiConsum.forEach(linie => {
             const numeBun = linie.bun.nume_bun;
+            const cantitate = typeof linie.cant_eliberata === 'number'
+                ? linie.cant_eliberata
+                : Number(linie.cant_eliberata);
 
             if (groupedData[numeBun]) {
-                groupedData[numeBun] += Number(linie.cant_eliberata);
+                groupedData[numeBun] += cantitate;
             } else {
-                groupedData[numeBun] = Number(linie.cant_eliberata);
+                groupedData[numeBun] = cantitate;
             }
         });
 
@@ -83,12 +49,9 @@ const ConsumChart: React.FC<ConsumChartProps> = ({ liniiConsum }) => {
 
     const chartData = processDataForChart();
 
-    // Asignăm culori din paletă pentru fiecare bun
     const bunColorMap = useMemo(() => {
         const colorMap: Record<string, string> = {};
         const uniqueBunNames = [...new Set(chartData.map(item => item.name))];
-
-        // Amestecăm array-ul de culori pentru a obține o distribuție aleatorie
         const shuffledColors = [...colorPalette].sort(() => Math.random() - 0.5);
 
         uniqueBunNames.forEach((name, index) => {
@@ -98,9 +61,7 @@ const ConsumChart: React.FC<ConsumChartProps> = ({ liniiConsum }) => {
         return colorMap;
     }, [chartData]);
 
-    // Calculăm valorile pentru linia de tendință
     const dataWithTrend = chartData.map((item, index, array) => {
-        // Media mobilă simplă
         const start = Math.max(0, index - 2);
         const relevantItems = array.slice(start, index + 1);
         const sum = relevantItems.reduce((acc, curr) => acc + curr.cantitate, 0);
@@ -148,7 +109,6 @@ const ConsumChart: React.FC<ConsumChartProps> = ({ liniiConsum }) => {
                     />
                     <Legend />
                     <Bar dataKey="cantitate" name="Cantitate bun" color='black' className='text-black'>
-                        {/* În loc să folosim proprietatea fill, folosim componentele Cell */}
                         {dataWithTrend.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={bunColorMap[entry.name]} color='black' />
                         ))}

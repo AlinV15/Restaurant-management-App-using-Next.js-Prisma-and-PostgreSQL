@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
     X, Edit, Trash2, Calendar, Plus, Save, User, Package2, Loader2,
-    AlertCircle, ShieldAlert, FileCheck, ShoppingCart
+    ShieldAlert, FileCheck, ShoppingCart
 } from 'lucide-react'
 import ConsumAlertaCantitateInsuficienta from '@/app/components/ConsumAlertaCantitateInsuficienta';
 import ModalCerereAprovizionare from '@/app/components/ModalCerereAprovizionare';

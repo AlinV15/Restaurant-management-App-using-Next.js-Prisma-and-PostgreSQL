@@ -1,39 +1,30 @@
-import { create } from 'zustand';
-import { Angajat, Gestiune, Bun, LinieConsum } from '@prisma/client';
+import { create } from "zustand";
+import { Bun, LinieConsum, Gestiune, Angajat, Consum } from "@/app/types/types";
 
 interface ConsumState {
-  // Data
   angajati: Angajat[];
   gestiuni: Gestiune[];
   bunuri: Bun[];
   liniiConsum: LinieConsum[];
-  consum: any | null;
-  
-  // UI states
+  consum: Consum | null;
   isLoading: boolean;
   isEditing: boolean;
   showDeleteConfirm: boolean;
-  
-  // Actions
+
   setAngajati: (angajati: Angajat[]) => void;
   setGestiuni: (gestiuni: Gestiune[]) => void;
   setBunuri: (bunuri: Bun[]) => void;
   setLiniiConsum: (linii: LinieConsum[]) => void;
-  setConsum: (consum: any) => void;
+  setConsum: (consum: Consum) => void;
   setIsLoading: (loading: boolean) => void;
   setIsEditing: (editing: boolean) => void;
   setShowDeleteConfirm: (show: boolean) => void;
-  
-  // Business logic
-  updateConsum: (consumData: any) => Promise<void>;
+
+  updateConsum: (consumData: Consum & { linii: LinieConsum[] }) => Promise<void>;
   deleteConsum: (id: number) => Promise<void>;
-  addLinieConsum: (linie: LinieConsum) => Promise<void>;
-  updateLinieConsum: (id: number, linie: Partial<LinieConsum>) => Promise<void>;
-  deleteLinieConsum: (id: number) => Promise<void>;
 }
 
 export const useConsumStore = create<ConsumState>((set, get) => ({
-  // Initial state
   angajati: [],
   gestiuni: [],
   bunuri: [],
@@ -43,7 +34,6 @@ export const useConsumStore = create<ConsumState>((set, get) => ({
   isEditing: false,
   showDeleteConfirm: false,
 
-  // Setters
   setAngajati: (angajati) => set({ angajati }),
   setGestiuni: (gestiuni) => set({ gestiuni }),
   setBunuri: (bunuri) => set({ bunuri }),
@@ -53,21 +43,31 @@ export const useConsumStore = create<ConsumState>((set, get) => ({
   setIsEditing: (editing) => set({ isEditing: editing }),
   setShowDeleteConfirm: (show) => set({ showDeleteConfirm: show }),
 
-  // Business logic
   updateConsum: async (consumData) => {
     try {
       const response = await fetch(`/api/consum/${consumData.id_consum}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(consumData),
+        body: JSON.stringify({
+          id_sef: consumData.id_sef,
+          id_gestiune: consumData.id_gestiune,
+          data: consumData.data || new Date(),
+          linii: consumData.linii,
+        }),
       });
-      
-      if (!response.ok) throw new Error('Failed to update consumption');
-      
-      const updatedConsum = await response.json();
-      set({ consum: updatedConsum });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Eroare la actualizarea consumului');
+      }
+
+      const { consum, linii } = await response.json();
+      set({
+        consum,
+        liniiConsum: linii,
+      });
     } catch (error) {
-      console.error('Error updating consumption:', error);
+      console.error('Eroare în updateConsum:', error);
       throw error;
     }
   },
@@ -77,71 +77,12 @@ export const useConsumStore = create<ConsumState>((set, get) => ({
       const response = await fetch(`/api/consum/${id}`, {
         method: 'DELETE',
       });
-      
+
       if (!response.ok) throw new Error('Failed to delete consumption');
-      
-      set({ consum: null });
+
+      set({ consum: null, liniiConsum: [] });
     } catch (error) {
       console.error('Error deleting consumption:', error);
-      throw error;
-    }
-  },
-
-  addLinieConsum: async (linie) => {
-    try {
-      const response = await fetch('/api/linie-consum', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(linie),
-      });
-      
-      if (!response.ok) throw new Error('Failed to add consumption line');
-      
-      const newLinie = await response.json();
-      set(state => ({
-        liniiConsum: [...state.liniiConsum, newLinie]
-      }));
-    } catch (error) {
-      console.error('Error adding consumption line:', error);
-      throw error;
-    }
-  },
-
-  updateLinieConsum: async (id, linie) => {
-    try {
-      const response = await fetch(`/api/linie-consum/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(linie),
-      });
-      
-      if (!response.ok) throw new Error('Failed to update consumption line');
-      
-      const updatedLinie = await response.json();
-      set(state => ({
-        liniiConsum: state.liniiConsum.map(l => 
-          l.id_linie_consum === id ? updatedLinie : l
-        )
-      }));
-    } catch (error) {
-      console.error('Error updating consumption line:', error);
-      throw error;
-    }
-  },
-
-  deleteLinieConsum: async (id) => {
-    try {
-      const response = await fetch(`/api/linie-consum/${id}`, {
-        method: 'DELETE',
-      });
-      
-      if (!response.ok) throw new Error('Failed to delete consumption line');
-      
-      set(state => ({
-        liniiConsum: state.liniiConsum.filter(l => l.id_linie_consum !== id)
-      }));
-    } catch (error) {
-      console.error('Error deleting consumption line:', error);
       throw error;
     }
   },

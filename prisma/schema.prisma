@@ -17,12 +17,8 @@ model Document {
   // Relații de moștenire implementate prin one-to-one
   consum              Consum?
   cerereAprovizionare CerereAprovizionare?
-<<<<<<< HEAD
-  receptie            Receptie?
-=======
-  receptie Receptie?
 
->>>>>>> c1832ce2a017ab1fbd9250d6f228cde73dc37f64
+  receptie Receptie?
 }
 
 model Angajati {

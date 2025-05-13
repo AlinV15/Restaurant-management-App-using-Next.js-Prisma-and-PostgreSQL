@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import ConsumView from './ConsumView';
 import ConsumEdit from './ConsumEdit';
 import LoadingSpinner from '@/app/components/LoadingSpinner';
+import { serializeData } from '@/app/utils/serialization'
 
 // Server Component
 async function ConsumPage({
@@ -13,8 +14,10 @@ async function ConsumPage({
     params: { slug: string },
     searchParams: { view?: string }
 }) {
-    const isView = searchParams.view === 'true';
-    const consumId = parseInt(params.slug);
+    const searchPara = await searchParams;
+    const para = await params;
+    const isView = searchPara.view === 'true';
+    const consumId = parseInt(para.slug);
 
     if (isNaN(consumId)) {
         notFound();
@@ -43,14 +46,14 @@ async function ConsumPage({
         notFound();
     }
 
-    // Initial data for the store
-    const initialData = {
+    // Initial data for the store, serialize to handle Decimal objects
+    const initialData = serializeData({
         consum,
         angajati,
         gestiuni,
         bunuri,
         liniiConsum: consum.liniiConsum
-    };
+    });
 
     return (
         <Suspense fallback={<LoadingSpinner />}>

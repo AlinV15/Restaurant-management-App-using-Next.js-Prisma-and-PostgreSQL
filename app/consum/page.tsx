@@ -4,6 +4,8 @@ import Sidebar from '../components/Sidebar'
 import ConsumChart from '../components/ConsumGrafic';
 import ConsumTable from '../components/ConsumTable';
 import ReportDialog from '@/app/components/ReportDialog';
+import { LinieConsum } from '../store/consumStore';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // Interfețe pentru modele
 interface Angajat {
@@ -41,15 +43,7 @@ interface Bun {
     unitate_masura: string;
 }
 
-interface LinieConsum {
-    id_linie_consum: number;
-    id_consum: number;
-    id_bun: number;
-    cantitate_necesara: number;
-    valoare: number;
-    cant_eliberata: number;
-    bun?: Bun;
-}
+
 
 const Page = () => {
     // State pentru datele necesare
@@ -170,7 +164,7 @@ const Page = () => {
             <div className='bg-white flex'>
                 <Sidebar />
                 <div className='w-4/5 flex flex-col items-center justify-center'>
-                    <p className="text-xl">Se încarcă datele...</p>
+                    <LoadingSpinner />
                 </div>
             </div>
         );
