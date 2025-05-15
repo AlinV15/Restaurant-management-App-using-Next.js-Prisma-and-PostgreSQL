@@ -1,247 +1,190 @@
-'use client'
-import React, { useEffect, useState } from 'react'
-import Sidebar from '../components/Sidebar'
+'use client';
+
+import React, { useEffect, useState, useMemo } from 'react';
+import Sidebar from '../components/Sidebar';
 import ConsumChart from '../components/ConsumGrafic';
 import ConsumTable from '../components/ConsumTable';
-import ReportDialog from '@/app/components/ReportDialog';
-import { LinieConsum } from '../store/consumStore';
+import ReportDialog from '../components/ReportDialog';
 import LoadingSpinner from '../components/LoadingSpinner';
 
-// Interfețe pentru modele
-interface Angajat {
-    id_angajat: number,
-    nume_angajat: string,
-    prenume_angajat: string,
-    functie: string,
-    telefon: string,
-    email: string,
-    data_angajare: Date,
-}
+import { Bun } from '@/lib/classes/Bun';
+import { Gestiune } from '@/lib/classes/Gestiune';
+import { Angajat } from '@/lib/classes/Angajat';
+import { Consum } from '@/lib/classes/Consum';
+import { LinieConsum } from '@/lib/classes/LinieConsum';
+import { LinieConsumExtinsa } from '@/lib/classes/LinieConsumExtinsa';
 
-interface Gestiune {
-    id_gestiune: number,
-    denumire: string,
-    id_gestionar: number
-}
-
-interface Consum {
-    id_consum: number,
-    valoare: number,
-    data: Date,
-    id_sef: number,
-    id_gestiune: number,
-    sef?: Angajat,
-    gestiune?: Gestiune
-}
-
-interface Bun {
-    id_bun: number;
-    nume_bun: string;
-    cantitate_disponibila: number;
-    pret_unitar: number;
-    data_expirare?: Date;
-    unitate_masura: string;
-}
-
-
+import { useConsumStore } from '../store/consumStore';
 
 const Page = () => {
-    // State pentru datele necesare
-    const [liniiConsum, setLiniiConsum] = useState<LinieConsum[]>([]);
-    const [bunuri, setBunuri] = useState<Bun[]>([]);
-    const [consumuri, setConsumuri] = useState<Consum[]>([]);
-    const [angajati, setAngajati] = useState<Angajat[]>([]);
-    const [gestiuni, setGestiuni] = useState<Gestiune[]>([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(false);
-    const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const {
+    angajati,
+    gestiuni,
+    setAngajati,
+    setGestiuni,
+    setBunuri,
+    setLiniiConsum,
+    bunuri,
+    liniiConsum,
+    getSefName,
+    getGestiuneName,
+    getBunById
+  } = useConsumStore();
 
-    const now = new Date();
+  const [consumuri, setConsumuri] = useState<Consum[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
 
-    // Funcție pentru a prelua toate datele necesare
-    const fetchData = async () => {
-        setLoading(true);
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [liniiRes, bunuriRes, consumuriRes, angajatiRes, gestiuniRes] = await Promise.all([
+        fetch('/api/linie-consum'),
+        fetch('/api/bun'),
+        fetch('/api/consum'),
+        fetch('/api/angajat'),
+        fetch('/api/gestiune')
+      ]);
 
-        try {
-            // Preluăm toate seturile de date în paralel
-            const [liniiRes, bunuriRes, consumuriRes, angajatiRes, gestiuniRes] = await Promise.all([
-                fetch("http://localhost:3000/api/linie-consum"),
-                fetch("http://localhost:3000/api/bun"),
-                fetch("http://localhost:3000/api/consum"),
-                fetch("http://localhost:3000/api/angajat"),
-                fetch("http://localhost:3000/api/gestiune")
-            ]);
+      if (!liniiRes.ok || !bunuriRes.ok || !consumuriRes.ok || !angajatiRes.ok || !gestiuniRes.ok) {
+        throw new Error('Eroare la preluarea datelor');
+      }
 
-            if (!liniiRes.ok || !bunuriRes.ok || !consumuriRes.ok || !angajatiRes.ok || !gestiuniRes.ok) {
-                throw new Error("Eroare la preluarea datelor");
-            }
-
-            const liniiData = await liniiRes.json();
-            const bunuriData = await bunuriRes.json();
-            const consumuriData = await consumuriRes.json();
-            const angajatiData = await angajatiRes.json();
-            const gestiuniData = await gestiuniRes.json();
-
-            // Setăm datele în state
-            setLiniiConsum(liniiData);
-            setBunuri(bunuriData);
-            setConsumuri(consumuriData);
-            setAngajati(angajatiData);
-            setGestiuni(gestiuniData);
-        } catch (error) {
-            console.error("Eroare:", error);
-            setError(true);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Procesăm datele de consum pentru a include toate relațiile
-    const processedConsumuri = React.useMemo(() => {
-        return consumuri.map(consum => {
-            // Găsim angajatul (șeful) asociat
-            const sef = angajati.find(a => a.id_angajat === consum.id_sef);
-
-            // Găsim gestiunea asociată
-            const gestiune = gestiuni.find(g => g.id_gestiune === consum.id_gestiune);
-
-            return {
-                ...consum,
-                sef: sef || {
-                    id_angajat: consum.id_sef,
-                    nume_angajat: 'Necunoscut',
-                    prenume_angajat: 'Necunoscut',
-                    functie: '',
-                    telefon: '',
-                    email: '',
-                    data_angajare: new Date()
-                },
-                gestiune: gestiune || {
-                    id_gestiune: consum.id_gestiune,
-                    denumire: 'Necunoscută',
-                    id_gestionar: 0
-                }
-            };
-        });
-    }, [consumuri, angajati, gestiuni]);
-
-    // Procesăm liniile de consum pentru grafic - asociem bunurile
-    const processedLiniiConsum = React.useMemo(() => {
-        return liniiConsum.map(linie => {
-            // Găsim bunul asociat
-            const bun = bunuri.find(b => b.id_bun === linie.id_bun);
-            return {
-                ...linie,
-                bun: bun || {
-                    id_bun: linie.id_bun,
-                    nume_bun: 'Necunoscut',
-                    unitate_masura: '',
-                    cantitate_disponibila: 0,
-                    pret_unitar: 0
-                }
-            };
-        });
-    }, [liniiConsum, bunuri]);
-
-    // Deschide dialogul pentru raport
-    const openReportDialog = () => {
-        setIsReportDialogOpen(true);
-    };
-
-    // Închide dialogul pentru raport
-    const closeReportDialog = () => {
-        setIsReportDialogOpen(false);
-    };
-
-    // Preluăm datele când se încarcă pagina
-    useEffect(() => {
-        fetchData();
-    }, []);
-
-    // Conținut pentru starea de încărcare
-    if (loading) {
-        return (
-            <div className='bg-white flex'>
-                <Sidebar />
-                <div className='w-4/5 flex flex-col items-center justify-center'>
-                    <LoadingSpinner />
-                </div>
-            </div>
-        );
+      setLiniiConsum((await liniiRes.json()).map(LinieConsum.fromApi));
+      setBunuri((await bunuriRes.json()).map(Bun.fromPrisma));
+      setConsumuri((await consumuriRes.json()).map(Consum.fromPrisma));
+      setAngajati((await angajatiRes.json()).map(Angajat.fromPrisma));
+      setGestiuni((await gestiuniRes.json()).map(Gestiune.fromPrisma));
+    } catch (error) {
+      console.error('Eroare:', error);
+      setError(true);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // Conținut pentru starea de eroare
-    if (error) {
-        return (
-            <div className='bg-white flex'>
-                <Sidebar />
-                <div className='w-4/5 flex flex-col items-center justify-center'>
-                    <p className="text-xl text-red-600">A apărut o eroare la încărcarea datelor.</p>
-                    <button
-                        onClick={fetchData}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-                    >
-                        Reîncarcă
-                    </button>
-                </div>
-            </div>
-        );
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const processedConsumuri = useMemo(() => {
+    return consumuri.map(consum => new Consum(
+      consum.nr_document,
+      new Date(consum.data),
+      consum.valoare,
+      consum.id_sef,
+      consum.id_gestiune
+    ));
+  }, [consumuri]);
+
+  //console.log(processedConsumuri)
+  /// console.log(liniiConsum)
+
+  const processedLiniiConsum = liniiConsum.map(linie => {
+    let bun;
+
+    console.log(bunuri)
+    for (let bunu of bunuri) {
+      if (bunu.id_bun === linie.id_bun) {
+        bun = bunu
+      }
     }
+    console.log(bun)
+    if (!bun) return;
 
+
+    return new LinieConsumExtinsa(
+      linie.id_linie_consum,
+      linie.id_consum,
+      linie.id_bun,
+      Number(linie.cantitate_necesara),
+      Number(linie.cant_eliberata),
+      Number(linie.valoare),
+      new Bun(bun.id_bun, bun.nume_bun, Number(bun.cantitate_disponibila), Number(bun.pret_unitar), bun.unitate_masura, bun.data_expirare!)
+    );
+  });
+
+  console.log(processedLiniiConsum)
+
+  if (loading) {
     return (
-        <div className='bg-white flex'>
-            <div className='w-1/4'>
-                <Sidebar />
-            </div>
-            <div className='w-4/5 flex flex-col p-5 text-black'>
-                {/* Titlul paginii */}
-                <h1 className="text-2xl font-bold mb-2">Gestionare Consum</h1>
-                <div className="h-px w-full bg-gray-900 mt-2 mb-4"></div>
-
-                {/* Graficul - ocupă aproximativ 2/3 din înălțime */}
-                <div className="mb-8">
-                    <h2 className="text-xl font-semibold mb-4">Analiză Consum</h2>
-                    {processedLiniiConsum.length > 0 ? (
-                        <ConsumChart liniiConsum={processedLiniiConsum} />
-                    ) : (
-                        <p>Nu există date pentru graficul de consum</p>
-                    )}
-                </div>
-
-                {/* Tabelul - ocupă restul spațiului */}
-                <div>
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-xl font-semibold">Lista Consumuri</h2>
-                        <button
-                            onClick={openReportDialog}
-                            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                            Generează Raport
-                        </button>
-                    </div>
-
-                    {processedConsumuri.length > 0 ? (
-                        <ConsumTable consum={processedConsumuri} />
-                    ) : (
-                        <p>Nu există consumuri disponibile</p>
-                    )}
-                </div>
-
-                {/* Dialog pentru raport */}
-                {isReportDialogOpen && (
-                    <ReportDialog
-                        isOpen={isReportDialogOpen}
-                        onClose={closeReportDialog}
-                        gestiuni={gestiuni}
-                        bunuri={bunuri}
-                    />
-                )}
-            </div>
+      <div className="bg-white flex">
+        <Sidebar />
+        <div className="w-4/5 flex items-center justify-center">
+          <LoadingSpinner />
         </div>
-    )
-}
+      </div>
+    );
+  }
 
-export default Page
+  if (error) {
+    return (
+      <div className="bg-white flex">
+        <Sidebar />
+        <div className="w-4/5 flex items-center justify-center flex-col">
+          <p className="text-xl text-red-600">A apărut o eroare la încărcarea datelor.</p>
+          <button
+            onClick={fetchData}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Reîncarcă
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white flex">
+      <div className="w-1/4">
+        <Sidebar />
+      </div>
+      <div className="w-4/5 flex flex-col p-6 text-black space-y-6">
+        <h1 className="text-2xl font-bold">Gestionare Consum</h1>
+        <div className="border-t border-gray-300"></div>
+
+        <section>
+          <h2 className="text-xl font-semibold mb-2">Analiză Consum</h2>
+          {processedLiniiConsum.length > 0 ? (
+            <ConsumChart liniiConsum={processedLiniiConsum} />
+          ) : (
+            <p className="text-gray-600">Nu există date pentru graficul de consum.</p>
+          )}
+        </section>
+
+        <section>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">Lista Consumuri</h2>
+            <button
+              onClick={() => setIsReportDialogOpen(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Generează Raport
+            </button>
+          </div>
+
+          {processedConsumuri.length > 0 ? (
+            <ConsumTable consum={processedConsumuri} />
+          ) : (
+            <p className="text-gray-600">Nu există consumuri disponibile.</p>
+          )}
+        </section>
+
+        {isReportDialogOpen && (
+          <ReportDialog
+            isOpen={isReportDialogOpen}
+            onClose={() => setIsReportDialogOpen(false)}
+            gestiuni={gestiuni}
+            bunuri={bunuri}
+          />
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Page;

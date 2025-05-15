@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useConsumStore } from '@/app/store/consumStore';
 import { Save, ArrowLeft, Plus, FileCheck, ShieldAlert, Loader2, Calendar, ShoppingCart, Edit, Trash2, Package2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
-import ModalAdaugareBun from '@/app/components/ModalAdaugareBun';
+import ModalAdaugareBun from '@/app/components/ModalLinieCerere';
 import ConsumAlertaCantitateInsuficienta from '@/app/components/ConsumAlertaCantitateInsuficienta';
 import ModalCerereAprovizionare from '@/app/components/ModalCerereAprovizionare';
 

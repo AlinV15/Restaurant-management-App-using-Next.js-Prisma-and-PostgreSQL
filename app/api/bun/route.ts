@@ -1,41 +1,40 @@
 import prisma from "@/lib/prisma";
-import { NextRequest, NextResponse } from 'next/server';
-
-
+import { NextRequest, NextResponse } from "next/server";
+import { Bun } from "@/lib/classes/Bun";
 
 export async function GET() {
     try {
         const bunuri = await prisma.bun.findMany();
-        return NextResponse.json(bunuri);
+        const result = bunuri.map(Bun.fromPrisma);
+        return NextResponse.json(result);
     } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: "Eroare internă" }, { status: 500 });
     }
 }
 
 export async function POST(request: NextRequest) {
     try {
-        const data = await request.json();
-        const { nume_bun, cantitate_disponibila, pret_unitar, data_expirare, unitate_masura } = data;
+        const body = await request.json();
+        const { nume_bun, cantitate_disponibila, pret_unitar, data_expirare, unitate_masura } = body;
 
-        if(!nume_bun || !cantitate_disponibila || !pret_unitar || !data_expirare || !unitate_masura) {
-            return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
+        if (!nume_bun || !cantitate_disponibila || !pret_unitar || !unitate_masura) {
+            return NextResponse.json({ error: "Toate câmpurile sunt obligatorii" }, { status: 400 });
         }
-        
-        const bunNou = await prisma.bun.create({
+
+        const bun = await prisma.bun.create({
             data: {
                 nume_bun,
                 cantitate_disponibila,
                 pret_unitar,
                 data_expirare: data_expirare ? new Date(data_expirare) : null,
-                unitate_masura
-            }
+                unitate_masura,
+            },
         });
-        console.log('Bunul a fost adaugat cu succes!');
-        return NextResponse.json(bunNou, { status: 201 });
+
+        return NextResponse.json(Bun.fromPrisma(bun), { status: 201 });
     } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        console.error(error);
+        return NextResponse.json({ error: "Eroare internă" }, { status: 500 });
     }
 }
-

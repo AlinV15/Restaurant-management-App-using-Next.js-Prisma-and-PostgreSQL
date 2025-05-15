@@ -1,53 +1,47 @@
 import { NextRequest, NextResponse } from "next/server";
-import  prisma  from "@/lib/prisma";
-import { StatusCerere } from "@prisma/client";
-
-export async function GET(){
-    try {
-       const cereriAprov = await prisma.cerereAprovizionare.findMany();
-
-       return NextResponse.json(cereriAprov, { status: 200 });
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: "Eroare server" }, { status: 500 });
-        
-    }
-}
+import prisma from "@/lib/prisma";
+import { StatusCerere as PrismaStatusCerere } from "@prisma/client";
+import { StatusCerere as AppStatusCerere, CerereAprovizionare } from "@/lib/classes/CerereAprovizionare";
+import { mapToPrismaStatus } from "@/app/utils/statusMapper";
 
 export async function POST(request: NextRequest) {
     try {
+        const { id_gestiune } = await request.json();
 
-     const body = await request.json();
-        const { id_gestiune   } = body;
-
-        console.log(id_gestiune);
-
-        if(!id_gestiune ) {
-            return NextResponse.json({ error: "Date lipsa" }, { status: 400 });
+        if (!id_gestiune) {
+            return NextResponse.json({ error: "Date lipsă" }, { status: 400 });
         }
 
-        const valoare = 0;
-        const doc = await prisma.document.create({
-            data: {
-                data: new Date(),
-            }
-        })
+        const doc = await prisma.document.create({ data: { data: new Date() } });
 
-        const cerereAprov = await prisma.cerereAprovizionare.create({
+        const cerere = await prisma.cerereAprovizionare.create({
             data: {
-                id_cerere: doc.nr_document,
+                nr_document: doc.nr_document,
                 id_gestiune,
-                status: StatusCerere.IN_ASTEPTARE,
+                status: mapToPrismaStatus(AppStatusCerere.IN_ASTEPTARE),
                 data: new Date(),
-                valoare
-            }
+                valoare: 0,
+            },
         });
 
-        return NextResponse.json(cerereAprov, { status: 201 });
-        
+        return NextResponse.json(CerereAprovizionare.fromPrisma(cerere), { status: 201 });
     } catch (error) {
-        console.log(error);
+        console.error(error);
         return NextResponse.json({ error: "Eroare server" }, { status: 500 });
-        
     }
 }
+
+
+
+
+export async function GET() {
+    try {
+        const cereri = await prisma.cerereAprovizionare.findMany();
+        const result = cereri.map(CerereAprovizionare.fromPrisma);
+        return NextResponse.json(result, { status: 200 });
+    } catch (error) {
+        console.error(error);
+        return NextResponse.json({ error: "Eroare server" }, { status: 500 });
+    }
+}
+

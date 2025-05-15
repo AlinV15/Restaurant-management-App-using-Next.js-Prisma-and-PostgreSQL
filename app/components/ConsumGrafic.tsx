@@ -1,4 +1,6 @@
-import React, { useMemo } from 'react';
+'use client';
+
+import React, { useEffect, useState, useMemo } from 'react';
 import {
     ComposedChart,
     Bar,
@@ -11,43 +13,52 @@ import {
     ResponsiveContainer,
     Cell
 } from 'recharts';
-import { LinieConsum, Bun } from '../store/consumStore';
+import { LinieConsumExtinsa } from '@/lib/classes/LinieConsumExtinsa';
 
 interface ConsumChartProps {
-    liniiConsum: LinieConsum[];
+    liniiConsum: (LinieConsumExtinsa | undefined)[]
 }
 
 const ConsumChart: React.FC<ConsumChartProps> = ({ liniiConsum }) => {
+    const [chartData, setChartData] = useState<{ name: string; cantitate: number }[]>([]);
+
+    useEffect(() => {
+        const fetchBunuri = async () => {
+            const groupedData: Record<string, number> = {};
+            if (!liniiConsum) return;
+
+            for (const linie of liniiConsum) {
+                if (!linie) return;
+                const bun = linie.bun ?? (await linie.getBunById(linie.id_bun));
+                if (!bun) continue;
+
+                const numeBun = bun.nume_bun;
+                const cantitate = Number(linie.cant_eliberata);
+
+                if (groupedData[numeBun]) {
+                    groupedData[numeBun] += cantitate;
+                } else {
+                    groupedData[numeBun] = cantitate;
+                }
+            }
+
+            const data = Object.keys(groupedData).map(key => ({
+                name: key,
+                cantitate: groupedData[key]
+            }));
+
+            setChartData(data);
+        };
+
+        fetchBunuri();
+    }, [liniiConsum]);
+
     const colorPalette = [
         '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
         '#FF9F40', '#C9CBCF', '#7BC043', '#F37736', '#FFC857',
         '#41B3A3', '#E27D60', '#85DCBA', '#E8A87C', '#C38D9E',
         '#8D8741', '#659DBD', '#DAAD86', '#BC986A', '#FBEEC1'
     ];
-
-    const processDataForChart = () => {
-        const groupedData: Record<string, number> = {};
-
-        liniiConsum.forEach(linie => {
-            const numeBun = linie.bun.nume_bun;
-            const cantitate = typeof linie.cant_eliberata === 'number'
-                ? linie.cant_eliberata
-                : Number(linie.cant_eliberata);
-
-            if (groupedData[numeBun]) {
-                groupedData[numeBun] += cantitate;
-            } else {
-                groupedData[numeBun] = cantitate;
-            }
-        });
-
-        return Object.keys(groupedData).map(key => ({
-            name: key,
-            cantitate: groupedData[key]
-        }));
-    };
-
-    const chartData = processDataForChart();
 
     const bunColorMap = useMemo(() => {
         const colorMap: Record<string, string> = {};
@@ -79,16 +90,10 @@ const ConsumChart: React.FC<ConsumChartProps> = ({ liniiConsum }) => {
                 <ComposedChart
                     data={dataWithTrend}
                     margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-                    className='text-black'
+                    className="text-black"
                 >
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                    <XAxis
-                        dataKey="name"
-                        tick={{ fontSize: 12 }}
-                        interval={0}
-                        angle={0}
-                        tickMargin={10}
-                    />
+                    <XAxis dataKey="name" tick={{ fontSize: 12 }} interval={0} angle={0} tickMargin={10} />
                     <YAxis
                         label={{
                             value: 'Cantitate consumată',
@@ -97,20 +102,11 @@ const ConsumChart: React.FC<ConsumChartProps> = ({ liniiConsum }) => {
                             style: { textAnchor: 'middle' }
                         }}
                     />
-                    <Tooltip
-                        formatter={(value, name, entry) => {
-                            if (name === 'Cantitate') {
-                                const itemName = (entry as any).payload.name;
-                                const bun = liniiConsum.find(l => l.bun.nume_bun === itemName);
-                                return [`${value} ${bun?.bun.unitate_masura || ''}`, name];
-                            }
-                            return [value, name];
-                        }}
-                    />
+                    <Tooltip />
                     <Legend />
-                    <Bar dataKey="cantitate" name="Cantitate bun" color='black' className='text-black'>
+                    <Bar dataKey="cantitate" name="Cantitate bun">
                         {dataWithTrend.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={bunColorMap[entry.name]} color='black' />
+                            <Cell key={`cell-${index}`} fill={bunColorMap[entry.name]} />
                         ))}
                     </Bar>
                     <Line
