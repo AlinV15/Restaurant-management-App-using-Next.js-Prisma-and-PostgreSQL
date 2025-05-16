@@ -1,5 +1,9 @@
+import { Angajat } from "@/lib/classes/Angajat";
+import { Gestiune } from "@/lib/classes/Gestiune";
 import { create } from "zustand";
-import { Bun, LinieConsum, Gestiune, Angajat, Consum } from "@/app/types/types";
+import { Bun } from "@/lib/classes/Bun"
+import { Consum } from "@/lib/classes/Consum"
+import { LinieConsum } from "@/lib/classes/LinieConsum";
 
 interface ConsumState {
   angajati: Angajat[];
@@ -45,7 +49,7 @@ export const useConsumStore = create<ConsumState>((set, get) => ({
 
   updateConsum: async (consumData) => {
     try {
-      const response = await fetch(`/api/consum/${consumData.id_consum}`, {
+      const response = await fetch(`/api/consum/${consumData.nr_document}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -87,3 +91,5 @@ export const useConsumStore = create<ConsumState>((set, get) => ({
     }
   },
 }));
+
+

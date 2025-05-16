@@ -1,11 +1,4 @@
-/**
- * Utility functions for serializing data before passing from Server Components to Client Components
- */
 
-/**
- * Safely serializes any data structure containing Decimal objects from Prisma
- * Handles nested objects, arrays, and primitive values
- */
 export function serializeData<T>(data: T): T {
     if (data === null || data === undefined) {
         return data;

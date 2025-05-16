@@ -1,6 +1,6 @@
 // components/ConsumAlertaCantitateInsuficienta.tsx
 import React, { useState, useEffect } from 'react';
-import { X, Check, AlertTriangle, ShoppingCart } from 'lucide-react';
+import { X, AlertTriangle, ShoppingCart } from 'lucide-react';
 
 interface AlertaCantitateInsuficientaProps {
     bun: {

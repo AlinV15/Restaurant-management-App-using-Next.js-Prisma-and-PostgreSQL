@@ -1,15 +1,8 @@
 "use client"
 import React, { useEffect, useState } from 'react'
-import ActivityBox, { Obj } from './ActivityBox'
-import { Finlandica } from 'next/font/google'
-
-interface Consum {
-    id_consum: number,
-    valoare: number,
-    data: Date,
-    id_sef: number,
-    id_gestiune: number
-}
+import ActivityBox from './ActivityBox'
+import { LinkClass } from '../models/LinkClass'
+import { Consum } from '@/lib/classes/Consum'
 
 
 const ActivityContainer = () => {
@@ -88,13 +81,17 @@ const ActivityContainer = () => {
             linkTitle: "Retete"
         }
     ]
+
+    const linksArray = objArray.map(obj => new LinkClass().parse(obj))
+
+    console.log(linksArray)
     return (
         <div className='grid grid-cols-2 gap-10 p-4'>
             {
                 consum ?
-                    objArray.map((obj: Obj) => {
+                    linksArray.map((obj: LinkClass) => {
                         return (
-                            <ActivityBox obj={obj} key={obj.key} />
+                            <ActivityBox obj={obj} key={obj.getKey()} />
                         )
                     }) : ""
             }

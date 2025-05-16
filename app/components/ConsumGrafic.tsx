@@ -1,4 +1,6 @@
-import React, { useMemo } from 'react';
+import { Bun } from '@/lib/classes/Bun';
+import { LinieConsum } from '@/lib/classes/LinieConsum';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
     ComposedChart,
     Bar,
@@ -11,7 +13,7 @@ import {
     ResponsiveContainer,
     Cell
 } from 'recharts';
-import { LinieConsum, Bun } from '../store/consumStore';
+
 
 interface ConsumChartProps {
     liniiConsum: LinieConsum[];
@@ -25,19 +27,25 @@ const ConsumChart: React.FC<ConsumChartProps> = ({ liniiConsum }) => {
         '#8D8741', '#659DBD', '#DAAD86', '#BC986A', '#FBEEC1'
     ];
 
+    const [bun, setBun] = useState<Bun>();
+
     const processDataForChart = () => {
         const groupedData: Record<string, number> = {};
 
-        liniiConsum.forEach(linie => {
-            const numeBun = linie.bun.nume_bun;
-            const cantitate = typeof linie.cant_eliberata === 'number'
-                ? linie.cant_eliberata
-                : Number(linie.cant_eliberata);
+        liniiConsum.forEach((linie: LinieConsum) => {
 
-            if (groupedData[numeBun]) {
-                groupedData[numeBun] += cantitate;
-            } else {
-                groupedData[numeBun] = cantitate;
+
+            if (bun) {
+                const numeBun = bun.nume_bun
+                const cantitate = typeof linie.cant_eliberata === 'number'
+                    ? linie.cant_eliberata
+                    : Number(linie.cant_eliberata);
+
+                if (groupedData[numeBun]) {
+                    groupedData[numeBun] += cantitate;
+                } else {
+                    groupedData[numeBun] = cantitate;
+                }
             }
         });
 
@@ -101,8 +109,8 @@ const ConsumChart: React.FC<ConsumChartProps> = ({ liniiConsum }) => {
                         formatter={(value, name, entry) => {
                             if (name === 'Cantitate') {
                                 const itemName = (entry as any).payload.name;
-                                const bun = liniiConsum.find(l => l.bun.nume_bun === itemName);
-                                return [`${value} ${bun?.bun.unitate_masura || ''}`, name];
+                                const bun = liniiConsum.find(l => l.getBun().nume_bun === itemName);
+                                return [`${value} ${bun?.getBun().unitate_masura || ''}`, name];
                             }
                             return [value, name];
                         }}

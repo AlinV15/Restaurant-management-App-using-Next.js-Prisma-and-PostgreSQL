@@ -1,9 +1,10 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { Angajat } from "@/lib/classes/Angajat";
 
 export async function PUT(request: NextRequest, context: { params: { id: string } }) {
     try {
-        
+
         const { id } = await context.params;
         const idNumeric = parseInt(id);
 
@@ -11,39 +12,16 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
             return NextResponse.json({ error: 'Id-ul este invalid' }, { status: 404 });
         }
         const data = await request.json();
-        const { nume_angajat, prenume_angajat, email, telefon, functie, data_angajare } = data;
+        const angajatActualizat = await Angajat.updateAngajat(data, idNumeric, prisma);
 
-        if (!nume_angajat || !prenume_angajat || !email || !telefon || !functie || !data_angajare) {
-            return NextResponse.json({ error: 'Toate câmpurile sunt obligatorii' }, { status: 400 });
-        }
-
-        const existingAngajat = await prisma.angajati.findUnique({
-            where: { id_angajat: idNumeric },
-        });
-
-        if (!existingAngajat) {
-            return NextResponse.json({ error: 'Angajatul nu a fost găsit' }, { status: 404 });
-        }
-        const angajatActualizat = await prisma.angajati.update({
-            where: { id_angajat: idNumeric },
-            data: {
-                nume_angajat,
-                prenume_angajat,
-                email,
-                telefon,
-                functie,
-                data_angajare
-            }
-        });
-
-        return NextResponse.json(angajatActualizat, { status: 200 });
+        return NextResponse.json(Angajat.fromPrisma(angajatActualizat), { status: 200 });
     } catch (error) {
         console.log(error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
 
-export async function DELETE(request: NextRequest, context: { params: { id: string } } ) {
+export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
     try {
         const { id } = await context.params;
         const idNumeric = parseInt(id);
