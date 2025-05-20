@@ -7,7 +7,7 @@ const service = new LinieCerereAprovizionareService();
 
 export async function GET(_: Request, context: { params: { id: string } }) {
     try {
-        const id = parseInt(context.params.id);
+        const id = await parseInt(context.params.id);
         const linie = await service.getById(id);
         return NextResponse.json(linie);
     } catch (error: any) {
@@ -17,7 +17,7 @@ export async function GET(_: Request, context: { params: { id: string } }) {
 
 export async function PUT(req: Request, context: { params: { id: string } }) {
     try {
-        const id = parseInt(context.params.id);
+        const id = await parseInt(context.params.id);
         const body = await req.json();
         const updated = await service.updateLinie(id, {
             cantitate: body.cantitate,
@@ -32,7 +32,7 @@ export async function PUT(req: Request, context: { params: { id: string } }) {
 
 export async function DELETE(_: Request, context: { params: { id: string } }) {
     try {
-        const id = parseInt(context.params.id);
+        const id = await parseInt(context.params.id);
         await service.deleteLinie(id);
         return NextResponse.json({ message: "Linie ștearsă." });
     } catch (error: any) {
