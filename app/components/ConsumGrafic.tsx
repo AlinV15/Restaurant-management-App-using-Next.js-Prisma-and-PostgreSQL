@@ -27,26 +27,54 @@ const ConsumChart: React.FC<ConsumChartProps> = ({ liniiConsum }) => {
         '#8D8741', '#659DBD', '#DAAD86', '#BC986A', '#FBEEC1'
     ];
 
-    const [bun, setBun] = useState<Bun>();
+    //const [bun, setBun] = useState<Bun>();
 
     const processDataForChart = () => {
         const groupedData: Record<string, number> = {};
 
+        liniiConsum = liniiConsum.map((item: any) => {
+            const ln = new LinieConsum(
+                item.id_linie_consum,
+                item.id_consum,
+                item.id_bun,
+                Number(item.cantitate_necesara),
+                Number(item.valoare),
+                Number(item.cant_eliberata)
+            );
+
+            // If bun data is available, set it
+            if (item.bun) {
+                // Create a proper Bun object
+                // Note: Adjust according to your Bun class constructor
+                const bun = new Bun(
+                    item.bun.id_bun,
+                    item.bun.nume,
+                    item.bun.um,
+                    item.bun.pret_unitar,
+                    item.bun.cantitate_disponibila
+                );
+
+                ln.setBun(bun);
+            }
+
+            return ln;
+        })
+
         liniiConsum.forEach((linie: LinieConsum) => {
 
+            const bun = linie.getBun?.();
 
-            if (bun) {
-                const numeBun = bun.nume_bun
-                const cantitate = typeof linie.cant_eliberata === 'number'
-                    ? linie.cant_eliberata
-                    : Number(linie.cant_eliberata);
+            const numeBun = bun.getNume?.()
+            const cantitate = typeof linie.getCantitateEliberata() === 'number'
+                ? linie.getCantitateEliberata()
+                : Number(linie.getCantitateEliberata());
 
-                if (groupedData[numeBun]) {
-                    groupedData[numeBun] += cantitate;
-                } else {
-                    groupedData[numeBun] = cantitate;
-                }
+            if (groupedData[numeBun]) {
+                groupedData[numeBun] += cantitate;
+            } else {
+                groupedData[numeBun] = cantitate;
             }
+
         });
 
         return Object.keys(groupedData).map(key => ({
@@ -109,8 +137,8 @@ const ConsumChart: React.FC<ConsumChartProps> = ({ liniiConsum }) => {
                         formatter={(value, name, entry) => {
                             if (name === 'Cantitate') {
                                 const itemName = (entry as any).payload.name;
-                                const bun = liniiConsum.find(l => l.getBun().nume_bun === itemName);
-                                return [`${value} ${bun?.getBun().unitate_masura || ''}`, name];
+                                const bun = liniiConsum.find(l => l.getBun?.().getNume?.() === itemName);
+                                return [`${value} ${bun?.getBun?.().getUM?.() || ''}`, name];
                             }
                             return [value, name];
                         }}

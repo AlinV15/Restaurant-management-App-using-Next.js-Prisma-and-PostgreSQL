@@ -1,10 +1,12 @@
-import { NextResponse } from "next/server";
-import { Bun } from "./Bun"
+// lib/classes/Stoc.ts
+
+import { Bun } from "./Bun";
 import { Gestiune } from "./Gestiune";
 
 export class Stoc {
-  private bun!: Bun;
-  private gestiune!: Gestiune
+  private bun?: Bun;
+  private gestiune?: Gestiune;
+
   constructor(
     private id_stoc: number,
     private id_bun: number,
@@ -15,77 +17,77 @@ export class Stoc {
     private cantitate_optima?: number
   ) { }
 
-  // getteri
-  getId() {
-    return this.id_stoc
+  // Getteri
+  getId(): number {
+    return this.id_stoc;
   }
 
-  getIdBun() {
-    return this.id_bun
+  getIdBun(): number {
+    return this.id_bun;
   }
 
-  getIdGestiune() {
-    return this.id_gestiune
+  getIdGestiune(): number {
+    return this.id_gestiune;
   }
 
-  getStocInitLunar() {
-    return this.stoc_init_lunar
+  getStocInitLunar(): number | undefined {
+    return this.stoc_init_lunar;
   }
 
-  getStocActual() {
-    return this.stoc_actual
+  getStocActual(): number | undefined {
+    return this.stoc_actual;
   }
 
-  getPragMinim() {
-    return this.prag_minim
+  getPragMinim(): number | undefined {
+    return this.prag_minim;
   }
 
-  getCantitateOptima() {
-    return this.cantitate_optima
+  getCantitateOptima(): number | undefined {
+    return this.cantitate_optima;
   }
 
-  getBun() {
-    return this.bun
+  getBun(): Bun | undefined {
+    return this.bun;
   }
 
-  getGestiune() {
-    return this.gestiune
+  getGestiune(): Gestiune | undefined {
+    return this.gestiune;
   }
 
-  //setteri
-
-  setStocInitLunar(stocInit: number) {
-    this.stoc_init_lunar = stocInit
+  // Setteri
+  setStocInitLunar(stocInit: number): void {
+    this.stoc_init_lunar = stocInit;
   }
 
-  setStocActual(stocActual: number) {
-    this.stoc_actual = stocActual
+  setStocActual(stocActual: number): void {
+    this.stoc_actual = stocActual;
   }
 
-  setPragMinim(pragMinim: number) {
-    this.prag_minim = pragMinim
+  setPragMinim(pragMinim: number): void {
+    this.prag_minim = pragMinim;
   }
 
-  setCantitateOptima(cantitate: number) {
-    this.cantitate_optima = cantitate
+  setCantitateOptima(cantitate: number): void {
+    this.cantitate_optima = cantitate;
   }
 
-  setBun(bun: Bun) {
-    this.bun = bun
+  setBun(bun: Bun): void {
+    this.bun = bun;
   }
 
-  setGestiune(gestiune: Gestiune) {
-    this.gestiune = gestiune
+  setGestiune(gestiune: Gestiune): void {
+    this.gestiune = gestiune;
   }
 
-  //alte metode
+  // Business logic
   esteSubPrag(): boolean {
     if (this.stoc_actual === undefined || this.prag_minim === undefined) return false;
     return this.stoc_actual < this.prag_minim;
   }
 
+  // Conversii
   static fromPrisma(data: any): Stoc {
-    const stk = new Stoc(
+    const stoc = new Stoc(
       data.id_stoc,
       data.id_bun,
       data.id_gestiune,
@@ -95,67 +97,23 @@ export class Stoc {
       data.cantitate_optima ? Number(data.cantitate_optima) : undefined
     );
 
-    stk.bun = data.bun ?? null;
-    stk.gestiune = data.gestiune ?? null;
-    return stk;
+    if (data.bun) stoc.setBun(Bun.fromPrisma(data.bun));
+    if (data.gestiune) stoc.setGestiune(Gestiune.fromPrisma(data.gestiune));
+
+    return stoc;
   }
 
-  static async createInDB(prisma: any, body: any) {
-    const { id_bun, id_gestiune, stoc_init_lunar, prag_minim, cantitate_optima } = body;
-
-    const actualStoc = await prisma.bun.findUnique({
-      where: { id_bun }
-    })
-
-    if (!actualStoc) {
-      return NextResponse.json({ error: "Bun not found" }, { status: 404 });
-    }
-
-    const allSameStocks = await prisma.stoc.findMany({
-      where: {
-        id_bun,
-        id_gestiune
-      }
-    })
-
-    if (allSameStocks.length > 0) {
-      return NextResponse.json({ error: "Stoc already exists for this bun and gestiune" }, { status: 400 });
-
-    }
-
-
-    const data = await prisma.stoc.create({
-      data: {
-        id_bun,
-        id_gestiune,
-        stoc_init_lunar,
-        stoc_actual: actualStoc.cantitate_disponibila,
-        prag_minim,
-        cantitate_optima
-      }
-    });
-
-    return Stoc.fromPrisma(data)
+  toJson(): any {
+    return {
+      id_stoc: this.id_stoc,
+      id_bun: this.id_bun,
+      id_gestiune: this.id_gestiune,
+      stoc_init_lunar: this.stoc_init_lunar,
+      stoc_actual: this.stoc_actual,
+      prag_minim: this.prag_minim,
+      cantitate_optima: this.cantitate_optima,
+      bun: this.bun?.toJson?.() ?? null,
+      gestiune: this.gestiune?.toJson?.() ?? null
+    };
   }
-
-
-  static async updateInDB(prisma: any, idNumeric: number, body: any) {
-    const { id_bun, id_gestiune, stoc_init_lunar, prag_minim, cantitate_optima } = body;
-
-    if (!id_bun || !id_gestiune || !stoc_init_lunar || !prag_minim || !cantitate_optima) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
-
-    const data = await prisma.stoc.update({
-      where: { id_stoc: idNumeric },
-      data: {
-        stoc_init_lunar,
-        prag_minim,
-        cantitate_optima
-      }
-    });
-
-    return Stoc.fromPrisma(data);
-  }
-
 }

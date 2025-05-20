@@ -1,24 +1,26 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { LinieConsum } from "@/lib/classes/LinieConsum";
+// app/api/linie-consum/[id]/route.ts
 
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+import { NextResponse } from "next/server";
+import { LinieConsumService } from "@/lib/services/LinieConsumService";
+
+const service = new LinieConsumService();
+
+export async function GET(_: Request, context: { params: { id: string } }) {
     try {
-        const { id } = await context.params;
-        const body = await req.json();
-        await LinieConsum.updateInDB(prisma, id, body)
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: "Error updating data" }, { status: 500 });
+        const id = parseInt(context.params.id);
+        const linie = await service.getById(id);
+        return NextResponse.json(linie);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 404 });
     }
 }
 
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(_: Request, context: { params: { id: string } }) {
     try {
-        const { id } = await context.params;
-        LinieConsum.deleteFromDB(prisma, id);
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: "Error deleting data" }, { status: 500 });
+        const id = parseInt(context.params.id);
+        await service.deleteLinie(id);
+        return NextResponse.json({ message: "Linie de consum ștearsă." });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }

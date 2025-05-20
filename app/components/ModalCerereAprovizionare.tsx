@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Edit, Trash2, Plus, ShoppingCart, Package2, FileDown, FilePlus, Loader2 } from 'lucide-react';
 import ModalAdaugareBun from './ModalAdaugareBun';
 import toast from 'react-hot-toast';
+import { BunInsuficient } from '../hooks/useCreareConsum';
 
 interface Bun {
     id_linie_cerere?: number; // ID-ul pentru linia cererii (pentru actualizare/ștergere)
@@ -15,11 +16,7 @@ interface Bun {
 }
 
 interface ModalCerereAprovizionareProps {
-    bunInitial: {
-        id_bun: number;
-        nume_bun: string;
-        cantitate_necesara: number | string;
-    };
+    bunInitial: BunInsuficient
     idCerere?: number; // ID-ul cererii de aprovizionare (dacă există)
     onClose: () => void;
     onSave: (linii: Bun[]) => void;
@@ -33,8 +30,9 @@ const ModalCerereAprovizionare: React.FC<ModalCerereAprovizionareProps> = ({
 }) => {
     const [linii, setLinii] = useState<Bun[]>([
         {
-            id_bun: bunInitial.id_bun,
-            nume_bun: bunInitial.nume_bun,
+            id_bun: bunInitial.bun.getId(),
+            nume_bun: bunInitial.bun.getNume(),
+            um: bunInitial.bun.getUM(),
             cantitate: Number(bunInitial.cantitate_necesara) || 5, // Valoare implicită sau valoarea necesară
             observatii: 'Cerere automată din consum'
         }

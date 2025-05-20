@@ -1,57 +1,46 @@
-import { NextResponse, NextRequest } from "next/server";
-import prisma from "@/lib/prisma";
-import { Consum } from "@/lib/classes/Consum";
+// app/api/consum/[id]/route.ts
 
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+import { NextResponse } from "next/server";
+import { ConsumService } from "@/lib/services/ConsumService";
+
+const service = new ConsumService();
+
+export async function GET(_: Request, context: { params: { id: string } }) {
     try {
-        const { id } = context.params;
+        const id = parseInt(context.params.id);
+        const consum = await service.getById(id);
+        return NextResponse.json(consum);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+}
+
+export async function PUT(req: Request, context: { params: { id: string } }) {
+    try {
+        const id = parseInt(context.params.id);
         const body = await req.json();
-        await Consum.actualizeazaInDB(prisma, body, id);
-
-    } catch (error) {
-        console.error(error);
-        const errorMessage = error instanceof Error ? error.message : "Error updating consum";
-        return NextResponse.json({ error: errorMessage }, { status: 500 });
+        const updated = await service.updateConsum(id, {
+            id_gestiune: body.id_gestiune,
+            id_sef: body.id_sef,
+            linii: body.linii.map((linie: any) => ({
+                id_bun: linie.id_bun,
+                cantitate_necesara: linie.cantitate_necesara,
+                cant_eliberata: linie.cant_eliberata,
+                valoare: linie.valoare
+            }))
+        });
+        return NextResponse.json(updated);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }
 
-
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(_: Request, context: { params: { id: string } }) {
     try {
-        const { id } = await context.params;
-
-        const consum = await Consum.stergeDinDB(prisma, id)
-        return NextResponse.json(Consum.fromPrisma(consum), { status: 200 });
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: "Error deleting data" }, { status: 500 });
+        const id = parseInt(context.params.id);
+        await service.stergeConsum(id);
+        return NextResponse.json({ message: "Șters cu succes." });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
     }
-}
-
-export async function GET(req: NextRequest, context: { params: { id: string } }) {
-    const { id } = await context.params;
-    if (id === undefined) {
-        return NextResponse.json({ error: 'The id not found' }, { status: 404 })
-    }
-    try {
-
-        const consum = await prisma.consum.findUnique({
-            where: { nr_document: parseInt(id) },
-            include: {
-                gestiune: true,
-                sef: true,
-                liniiConsum: {
-
-                    include: {
-                        bun: true
-                    }
-                }
-            }
-        })
-        return NextResponse.json(Consum.fromPrisma(consum), { status: 200 });
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: "Error getting data" }, { status: 500 });
-    }
-
 }

@@ -1,37 +1,32 @@
-import { NextResponse, NextRequest } from 'next/server';
-import prisma from '@/lib/prisma';
-import { Stoc } from '@/lib/classes/Stoc';
+// app/api/stoc/[id]/route.ts
 
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+import { NextResponse } from "next/server";
+import { StocService } from "@/lib/services/StocService";
+
+const service = new StocService();
+
+export async function GET(_: Request, context: { params: { id: string } }) {
     try {
-        const { id } = await context.params;
-        const idNumeric = parseInt(id);
-        if (isNaN(idNumeric)) {
-            return NextResponse.json({ error: "Invalid ID" }, { status: 404 });
-        }
-
-        const body = await req.json();
-        const data = await Stoc.updateInDB(prisma, idNumeric, body);
-
-        return NextResponse.json(data, { status: 200 });
-    } catch (error) {
-        console.error("Error updating data:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        const id = parseInt(context.params.id);
+        const stoc = await service.getById(id);
+        return NextResponse.json(stoc);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 404 });
     }
 }
 
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
-    const { id } = await context.params;
-    const idNumeric = parseInt(id);
-
+export async function PUT(req: Request, context: { params: { id: string } }) {
     try {
-        const data = await prisma.stoc.delete({
-            where: { id_stoc: idNumeric }
+        const id = parseInt(context.params.id);
+        const data = await req.json();
+        const updated = await service.updateStoc(id, {
+            stoc_init_lunar: data.stoc_init_lunar,
+            stoc_actual: data.stoc_actual,
+            prag_minim: data.prag_minim,
+            cantitate_optima: data.cantitate_optima
         });
-
-        return NextResponse.json(data, { status: 200 });
-    } catch (error) {
-        console.error("Error deleting data:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json(updated);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }

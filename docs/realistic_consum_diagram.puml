@@ -1,0 +1,93 @@
+
+@startuml
+title Arhitectura MVC extinsă - Formular Consum (Controller împărțit)
+
+package "View" {
+  class FormularConsumView
+  class ModalLinieConsum
+  class ModalCerereAprovizionare
+}
+
+package "Controller" {
+  package "Client-side" {
+    class useCreareConsum
+    class ConsumStore
+  }
+
+  package "Network" {
+    class POST_api_consum
+    class PUT_api_linie_consum
+    class DELETE_api_linie_consum
+    class POST_api_cerere_aprovizionare
+  }
+
+  package "Business" {
+    class ConsumService
+    class LinieConsumService
+    class CerereAprovizionareService
+    class BunService
+    class StocService
+  }
+}
+
+package "Model" {
+  class Consum {
+    +nr_document: number
+    +data: Date
+    +id_gestiune: number
+  }
+  class LinieConsum {
+    +id_bun: number
+    +cantitate_necesara: number
+    +cant_eliberata: number
+  }
+  class Bun {
+    +id_bun: number
+    +cantitate_disponibila: number
+  }
+  class Gestiune {
+    +id_gestiune: number
+    +denumire: string
+  }
+  class Angajat {
+    +id_angajat: number
+    +nume: string
+  }
+  class Stoc
+  class CerereAprovizionare
+  class LinieCerereAprovizionare
+}
+
+' === Relationships ===
+FormularConsumView --> useCreareConsum : useHook()
+FormularConsumView --> ModalLinieConsum : open()
+FormularConsumView --> ModalCerereAprovizionare : open()
+
+useCreareConsum --> ConsumStore : getState()
+useCreareConsum --> POST_api_consum : creeazaConsum()
+useCreareConsum --> PUT_api_linie_consum : updateLinie()
+useCreareConsum --> DELETE_api_linie_consum : stergeLinie()
+useCreareConsum --> POST_api_cerere_aprovizionare : trimiteCerere()
+
+POST_api_consum --> ConsumService
+PUT_api_linie_consum --> LinieConsumService
+DELETE_api_linie_consum --> LinieConsumService
+POST_api_cerere_aprovizionare --> CerereAprovizionareService
+
+ConsumService --> Consum
+ConsumService --> LinieConsum
+ConsumService --> BunService
+ConsumService --> StocService
+
+ConsumStore --> Gestiune
+ConsumStore --> Angajat
+ConsumStore --> LinieConsum
+
+CerereAprovizionareService --> CerereAprovizionare
+CerereAprovizionareService --> LinieCerereAprovizionare
+
+LinieConsum --> Bun
+Stoc --> Bun
+Stoc --> Gestiune
+
+@enduml

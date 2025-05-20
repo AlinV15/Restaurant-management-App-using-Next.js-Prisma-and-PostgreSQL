@@ -1,39 +1,28 @@
-import { NextResponse, NextRequest } from "next/server";
-import prisma from "@/lib/prisma";
-import { Gestiune } from "@/lib/classes/Gestiune";
+// app/api/gestiune/route.ts
+
+import { NextResponse } from "next/server";
+import { GestiuneService } from "@/lib/services/GestiuneService";
+
+const service = new GestiuneService();
 
 export async function GET() {
     try {
-        const data = await prisma.gestiune.findMany();
-        return NextResponse.json(data.map(Gestiune.fromPrisma), { status: 200 });
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: "Error fetching data" }, { status: 500 });
-
+        const gestiuni = await service.getAll();
+        return NextResponse.json(gestiuni);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
     try {
-        const data = await request.json();
-        const { denumire, id_gestionar } = data;
-
-
-
-        if (!denumire || !id_gestionar) {
-            return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
-        }
-
-        const gestiuneNoua = await prisma.gestiune.create({
-            data: {
-                denumire,
-                id_gestionar
-            }
+        const body = await req.json();
+        const gestiune = await service.createGestiune({
+            denumire: body.denumire,
+            id_gestionar: body.id_gestionar ?? null
         });
-        console.log('Gestiunea a fost adaugata cu succes!');
-        return NextResponse.json(Gestiune.fromPrisma(gestiuneNoua), { status: 201 });
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        return NextResponse.json(gestiune, { status: 201 });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }

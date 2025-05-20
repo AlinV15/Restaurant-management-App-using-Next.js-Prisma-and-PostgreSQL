@@ -1,8 +1,9 @@
+
+import { create } from "zustand";
 import { Angajat } from "@/lib/classes/Angajat";
 import { Gestiune } from "@/lib/classes/Gestiune";
-import { create } from "zustand";
-import { Bun } from "@/lib/classes/Bun"
-import { Consum } from "@/lib/classes/Consum"
+import { Bun } from "@/lib/classes/Bun";
+import { Consum } from "@/lib/classes/Consum";
 import { LinieConsum } from "@/lib/classes/LinieConsum";
 
 interface ConsumState {
@@ -11,6 +12,7 @@ interface ConsumState {
   bunuri: Bun[];
   liniiConsum: LinieConsum[];
   consum: Consum | null;
+  consumNou: Consum | null;
   isLoading: boolean;
   isEditing: boolean;
   showDeleteConfirm: boolean;
@@ -20,9 +22,15 @@ interface ConsumState {
   setBunuri: (bunuri: Bun[]) => void;
   setLiniiConsum: (linii: LinieConsum[]) => void;
   setConsum: (consum: Consum) => void;
+  setConsumNou: (consum: Consum) => void;
+  resetConsumNou: () => void;
   setIsLoading: (loading: boolean) => void;
   setIsEditing: (editing: boolean) => void;
   setShowDeleteConfirm: (show: boolean) => void;
+
+  addLinieConsum: (linie: LinieConsum) => void;
+  removeLinieConsum: (id_bun: number) => void;
+  updateLinieConsum: (linie: LinieConsum) => void;
 
   updateConsum: (consumData: Consum & { linii: LinieConsum[] }) => Promise<void>;
   deleteConsum: (id: number) => Promise<void>;
@@ -34,6 +42,7 @@ export const useConsumStore = create<ConsumState>((set, get) => ({
   bunuri: [],
   liniiConsum: [],
   consum: null,
+  consumNou: null,
   isLoading: true,
   isEditing: false,
   showDeleteConfirm: false,
@@ -43,19 +52,36 @@ export const useConsumStore = create<ConsumState>((set, get) => ({
   setBunuri: (bunuri) => set({ bunuri }),
   setLiniiConsum: (linii) => set({ liniiConsum: linii }),
   setConsum: (consum) => set({ consum }),
+  setConsumNou: (consum) => set({ consumNou: consum }),
+  resetConsumNou: () => set({ consumNou: null }),
   setIsLoading: (loading) => set({ isLoading: loading }),
   setIsEditing: (editing) => set({ isEditing: editing }),
   setShowDeleteConfirm: (show) => set({ showDeleteConfirm: show }),
 
+  addLinieConsum: (linie) => {
+    const current = get().liniiConsum;
+    set({ liniiConsum: [...current, linie] });
+  },
+  removeLinieConsum: (id_bun) => {
+    const updated = get().liniiConsum.filter(l => l.getIdBun() !== id_bun);
+    set({ liniiConsum: updated });
+  },
+  updateLinieConsum: (linieNoua) => {
+    const updated = get().liniiConsum.map(l =>
+      l.getIdBun() === linieNoua.getIdBun() ? linieNoua : l
+    );
+    set({ liniiConsum: updated });
+  },
+
   updateConsum: async (consumData) => {
     try {
-      const response = await fetch(`/api/consum/${consumData.nr_document}`, {
+      const response = await fetch(`/api/consum/${consumData.getId()}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          id_sef: consumData.id_sef,
-          id_gestiune: consumData.id_gestiune,
-          data: consumData.data || new Date(),
+          id_sef: consumData.getIdSef(),
+          id_gestiune: consumData.getIdGestiune(),
+          data: consumData.getData() || new Date(),
           linii: consumData.linii,
         }),
       });
@@ -91,5 +117,3 @@ export const useConsumStore = create<ConsumState>((set, get) => ({
     }
   },
 }));
-
-

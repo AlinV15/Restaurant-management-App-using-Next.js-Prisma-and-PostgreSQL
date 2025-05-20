@@ -1,48 +1,44 @@
-import { NextResponse, NextRequest } from "next/server";
-import prisma from "@/lib/prisma";
-import { Angajat } from "@/lib/classes/Angajat";
+// app/api/angajat/[id]/route.ts
 
-export async function PUT(request: NextRequest, context: { params: { id: string } }) {
+import { NextResponse } from "next/server";
+import { AngajatService } from "@/lib/services/AngajatService";
+
+const service = new AngajatService();
+
+export async function GET(_: Request, context: { params: { id: string } }) {
     try {
-
-        const { id } = await context.params;
-        const idNumeric = parseInt(id);
-
-        if (isNaN(idNumeric)) {
-            return NextResponse.json({ error: 'Id-ul este invalid' }, { status: 404 });
-        }
-        const data = await request.json();
-        const angajatActualizat = await Angajat.updateAngajat(data, idNumeric, prisma);
-
-        return NextResponse.json(Angajat.fromPrisma(angajatActualizat), { status: 200 });
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+        const id = parseInt(context.params.id);
+        const angajat = await service.getById(id);
+        return NextResponse.json(angajat);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 404 });
     }
 }
 
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
+export async function PUT(req: Request, context: { params: { id: string } }) {
     try {
-        const { id } = await context.params;
-        const idNumeric = parseInt(id);
-        if (!idNumeric) {
-            return NextResponse.json({ error: 'Angajatul nu a fost găsit' }, { status: 404 });
-        }
-        const existingAngajat = await prisma.angajati.findUnique({
-            where: { id_angajat: idNumeric },
+        const id = parseInt(context.params.id);
+        const data = await req.json();
+        const updated = await service.updateAngajat(id, {
+            nume_angajat: data.nume_angajat,
+            prenume_angajat: data.prenume_angajat,
+            functie: data.functie,
+            telefon: data.telefon,
+            email: data.email,
+            data_angajare: data.data_angajare
         });
+        return NextResponse.json(updated);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+}
 
-        if (!existingAngajat) {
-            return NextResponse.json({ error: 'Angajatul nu a fost găsit' }, { status: 404 });
-        }
-
-        await prisma.angajati.delete({
-            where: { id_angajat: idNumeric },
-        });
-
-        return NextResponse.json({ message: 'Angajatul a fost șters cu succes!' }, { status: 200 });
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+export async function DELETE(_: Request, context: { params: { id: string } }) {
+    try {
+        const id = parseInt(context.params.id);
+        await service.deleteAngajat(id);
+        return NextResponse.json({ message: "Angajat șters." });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }

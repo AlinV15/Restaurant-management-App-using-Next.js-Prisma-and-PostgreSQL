@@ -1,29 +1,32 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { Angajat } from "@/lib/classes/Angajat";
+// app/api/angajat/route.ts
+
+import { NextResponse } from "next/server";
+import { AngajatService } from "@/lib/services/AngajatService";
+
+const service = new AngajatService();
 
 export async function GET() {
     try {
-        const angajati = await prisma.angajati.findMany();
-        const res = angajati.map(Angajat.fromPrisma)
-        return NextResponse.json(res);
-
-    } catch (error) {
-        console.error("Eroare in preluarea angajatilor:", error);
-        return NextResponse.json({ error: "A aparut o eroare la preluarea angajatilor" }, { status: 500 });
-
+        const angajati = await service.getAll();
+        return NextResponse.json(angajati);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
     try {
-        const data = await request.json();
-        const angajat = await Angajat.postAngajat(data, prisma)
-        return NextResponse.json(Angajat.fromPrisma(angajat), { status: 201 });
-
-    } catch (error) {
-        console.error("Eroare in adaugarea angajatului:", error);
-        return NextResponse.json({ error: "A aparut o eroare la adaugarea angajatului" }, { status: 500 });
-
+        const data = await req.json();
+        const angajat = await service.createAngajat({
+            nume_angajat: data.nume_angajat,
+            prenume_angajat: data.prenume_angajat,
+            functie: data.functie,
+            telefon: data.telefon,
+            email: data.email,
+            data_angajare: data.data_angajare
+        });
+        return NextResponse.json(angajat, { status: 201 });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }

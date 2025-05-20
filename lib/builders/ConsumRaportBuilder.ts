@@ -188,7 +188,7 @@ export class ConsumRaportBuilder {
       const totalConsum = consum.getTotal();
       totalGeneral = totalGeneral.add(new Decimal(totalConsum));
 
-      const gestiuneKey = consum.getIdGesiune();
+      const gestiuneKey = consum.getIdGestiune();
 
       if (!gestiuniMap.has(gestiuneKey)) {
         const gestiune = new Gestiune(gestiuneKey, consum.getGestiune().getDenumire(), consum.getIdSef());

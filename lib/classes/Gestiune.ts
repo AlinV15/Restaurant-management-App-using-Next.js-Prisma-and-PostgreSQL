@@ -1,85 +1,68 @@
-import { Consum } from "./Consum"
+// lib/classes/Gestiune.ts
+
+import { Angajat } from "./Angajat";
+import { Consum } from "./Consum";
 
 export class Gestiune {
-  private consumuri!: Consum[]
-  private totalGestiune!: number
+  private consumuri: Consum[] = [];
+  private totalGestiune: number = 0;
+  private angajat!: Angajat;
+
   constructor(
     private id_gestiune: number,
     private denumire: string | null,
     private id_gestionar: number | null
   ) { }
 
-  //getteri
-  public getDenumire() {
-    return this.denumire
+  // Getteri
+  public getDenumire(): string | null {
+    return this.denumire;
   }
 
-  public getId_gestionar() {
-    return this.id_gestionar
+  public getIdGestionar(): number | null {
+    return this.id_gestionar;
   }
 
-  public getID() {
-    return this.id_gestiune
+  public getIdGestiune(): number {
+    return this.id_gestiune;
   }
 
-  //setteri
-  public setDenumire(den: string) {
-    this.denumire = den
+  public getAngajat(): Angajat {
+    return this.angajat;
   }
 
-  public setIdGestionar(gestionar: number) {
-    this.id_gestionar = gestionar
+  public getConsumuri(): Consum[] {
+    return this.consumuri;
   }
 
-  //alte metode
-
-  static fromPrisma(data: any): Gestiune {
-    return new Gestiune(
-      data.id_gestiune,
-      data.denumire ?? null,
-      data.id_gestionar ?? null
-    );
+  public getTotal(): number {
+    return this.totalGestiune;
   }
 
-
-
-  static placeholder(id: number): Gestiune {
-    return new Gestiune(id, "Necunoscută", 0);
+  // Setteri
+  public setDenumire(den: string): void {
+    this.denumire = den;
   }
-  esteAsignata(): boolean {
+
+  public setIdGestionar(gestionar: number): void {
+    this.id_gestionar = gestionar;
+  }
+
+  public setAngajat(ang: Angajat): void {
+    this.angajat = ang;
+  }
+
+  // Metode de business
+  public esteAsignata(): boolean {
     return this.id_gestionar !== null;
   }
 
-  toJson(): any {
-    return {
-      id_gestiune: this.id_gestiune,
-      denumire: this.denumire,
-      id_gestionar: this.id_gestionar
-    };
-  }
-
-  static fromApi(data: any): Gestiune {
-    return new Gestiune(
-      data.id_gestiune,
-      data.denumire ?? null,
-      data.id_gestionar ?? null
-    );
-  }
-
-  adaugaConsum(consum: Consum): void {
+  public adaugaConsum(consum: Consum): void {
     this.consumuri.push(consum);
     this.totalGestiune += consum.getTotal();
   }
 
-  getConsumuri(): Consum[] {
-    return this.consumuri;
-  }
-
-  getTotal(): number {
-    return this.totalGestiune;
-  }
-
-  getTotaluriBunuri(): Record<number, number> {
+  public getTotaluriBunuri(): Record<number, number> {
     const totaluri: Record<number, number> = {};
 
     for (const consum of this.consumuri) {
@@ -95,11 +78,7 @@ export class Gestiune {
     return totaluri;
   }
 
-  /**
-   * Calculează cantitatea totală pentru fiecare bun consumat în gestiune
-   *  Un obiect care mapează ID-ul bunului la cantitatea totală consumată
-   */
-  getCantitatiTotaleBunuri(): Record<number, number> {
+  public getCantitatiTotaleBunuri(): Record<number, number> {
     const cantitati: Record<number, number> = {};
 
     for (const consum of this.consumuri) {
@@ -113,5 +92,34 @@ export class Gestiune {
     }
 
     return cantitati;
+  }
+
+  // Conversii
+  public toJson(): any {
+    return {
+      id_gestiune: this.id_gestiune,
+      denumire: this.denumire,
+      id_gestionar: this.id_gestionar
+    };
+  }
+
+  public static fromPrisma(data: any): Gestiune {
+    return new Gestiune(
+      data.id_gestiune,
+      data.denumire ?? null,
+      data.id_gestionar ?? null
+    );
+  }
+
+  public static fromApi(data: any): Gestiune {
+    return new Gestiune(
+      data.id_gestiune,
+      data.denumire ?? null,
+      data.id_gestionar ?? null
+    );
+  }
+
+  public static placeholder(id: number): Gestiune {
+    return new Gestiune(id, "Necunoscută", 0);
   }
 }

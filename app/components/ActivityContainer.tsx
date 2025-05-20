@@ -83,8 +83,6 @@ const ActivityContainer = () => {
     ]
 
     const linksArray = objArray.map(obj => new LinkClass().parse(obj))
-
-    console.log(linksArray)
     return (
         <div className='grid grid-cols-2 gap-10 p-4'>
             {

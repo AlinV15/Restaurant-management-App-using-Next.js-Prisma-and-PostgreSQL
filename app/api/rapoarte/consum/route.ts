@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from "next/server";
-import { ConsumRaportBuilder } from "@/lib/classes/ConsumRaportBuilder";
+import { ConsumRaportBuilder } from "@/lib/builders/ConsumRaportBuilder";
 
 export async function GET(request: NextRequest) {
     try {

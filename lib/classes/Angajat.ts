@@ -1,5 +1,4 @@
-import { convertToISO8601 } from "@/app/utils/format"
-import { NextResponse } from "next/server"
+// lib/classes/Angajat.ts
 
 export class Angajat {
   constructor(
@@ -12,66 +11,66 @@ export class Angajat {
     private data_angajare: Date
   ) { }
 
-  //getteri
-  public getId() {
-    return this.id_angajat
+  // Getteri
+  public getId(): number {
+    return this.id_angajat;
   }
 
-  public getNume() {
-    return this.nume_angajat
+  public getNume(): string {
+    return this.nume_angajat;
   }
 
-  public getPrenume() {
-    return this.prenume_angajat
+  public getPrenume(): string {
+    return this.prenume_angajat;
   }
 
-  public getFunctie() {
-    return this.functie
+  public getFunctie(): string {
+    return this.functie;
   }
 
-  public getTelefon() {
-    return this.telefon
+  public getTelefon(): string {
+    return this.telefon;
   }
 
-  public getEmail() {
-    return this.email
+  public getEmail(): string {
+    return this.email;
   }
 
-  public getDataAngajare() {
-    return this.data_angajare
+  public getDataAngajare(): Date {
+    return this.data_angajare;
   }
 
-  //setteri
-
-  public setNume(nume: string) {
-    this.nume_angajat = nume
-  }
-  public setPrenume(prenume: string) {
-    this.prenume_angajat = prenume
-  }
-
-  public setFunctie(functie: string) {
-    this.functie = functie
-  }
-
-  public setTelefon(telefon: string) {
-    this.telefon = telefon
-  }
-
-  public setEmail(email: string) {
-    this.email = email
-  }
-
-  public setDataAngajare(data: Date) {
-    this.data_angajare = data
-  }
-
-
-  getNumeComplet(): string {
+  public getNumeComplet(): string {
     return `${this.prenume_angajat} ${this.nume_angajat}`;
   }
 
-  static fromPrisma(data: any): Angajat {
+  // Setteri
+  public setNume(nume: string): void {
+    this.nume_angajat = nume;
+  }
+
+  public setPrenume(prenume: string): void {
+    this.prenume_angajat = prenume;
+  }
+
+  public setFunctie(functie: string): void {
+    this.functie = functie;
+  }
+
+  public setTelefon(telefon: string): void {
+    this.telefon = telefon;
+  }
+
+  public setEmail(email: string): void {
+    this.email = email;
+  }
+
+  public setDataAngajare(data: Date): void {
+    this.data_angajare = data;
+  }
+
+  // Conversii
+  public static fromPrisma(data: any): Angajat {
     return new Angajat(
       data.id_angajat,
       data.nume_angajat,
@@ -83,19 +82,19 @@ export class Angajat {
     );
   }
 
-  toJson() {
-    return {
-      id_angajat: this.getId(),
-      nume_angajat: this.getNume(),
-      prenume_angajat: this.getPrenume(),
-      functie: this.getFunctie(),
-      telefon: this.getTelefon(),
-      email: this.getEmail(),
-      data_angajare: this.getDataAngajare()
-    }
+  public static fromApi(data: any): Angajat {
+    return new Angajat(
+      data.id_angajat,
+      data.nume_angajat,
+      data.prenume_angajat,
+      data.functie,
+      data.telefon,
+      data.email,
+      new Date(data.data_angajare)
+    );
   }
 
-  static placeholder(id: number): Angajat {
+  public static placeholder(id: number): Angajat {
     return new Angajat(
       id,
       "Necunoscut",
@@ -107,59 +106,15 @@ export class Angajat {
     );
   }
 
-  static async postAngajat(data: any, prisma: any) {
-    const { nume_angajat, prenume_angajat, email, telefon, functie, data_angajare } = data;
-
-    console.log("Datele primite:", data);
-
-
-    if (!nume_angajat || !prenume_angajat || !functie || !telefon || !email || !data_angajare) {
-      return NextResponse.json({ error: "Toate campurile sunt obligatorii" }, { status: 400 });
-    }
-
-    const dataCorecta = convertToISO8601(data_angajare)
-
-    const angajatNou = await prisma.angajati.create({
-      data: {
-        nume_angajat,
-        prenume_angajat,
-        functie,
-        telefon,
-        email,
-        data_angajare: dataCorecta
-      }
-    });
-
-    console.log("Angajatul a fost adaugat cu succes!");
-    return angajatNou
+  public toJson(): any {
+    return {
+      id_angajat: this.getId(),
+      nume_angajat: this.getNume(),
+      prenume_angajat: this.getPrenume(),
+      functie: this.getFunctie(),
+      telefon: this.getTelefon(),
+      email: this.getEmail(),
+      data_angajare: this.getDataAngajare().toISOString()
+    };
   }
-
-
-  static async updateAngajat(data: any, idNumeric: number, prisma: any) {
-    const { nume_angajat, prenume_angajat, email, telefon, functie, data_angajare } = data;
-
-    if (!nume_angajat || !prenume_angajat || !email || !telefon || !functie || !data_angajare) {
-      return NextResponse.json({ error: 'Toate câmpurile sunt obligatorii' }, { status: 400 });
-    }
-
-    const existingAngajat = await prisma.angajati.findUnique({
-      where: { id_angajat: idNumeric },
-    });
-
-    if (!existingAngajat) {
-      return NextResponse.json({ error: 'Angajatul nu a fost găsit' }, { status: 404 });
-    }
-    return await prisma.angajati.update({
-      where: { id_angajat: idNumeric },
-      data: {
-        nume_angajat,
-        prenume_angajat,
-        email,
-        telefon,
-        functie,
-        data_angajare
-      }
-    });
-  }
-
 }

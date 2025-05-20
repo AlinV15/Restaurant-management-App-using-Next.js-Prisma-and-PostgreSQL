@@ -1,17 +1,15 @@
 // components/ConsumAlertaCantitateInsuficienta.tsx
 import React, { useState, useEffect } from 'react';
 import { X, AlertTriangle, ShoppingCart } from 'lucide-react';
+import { BunCerere } from '../hooks/useCreareConsum';
+import { BunInsuficient } from '../hooks/useCreareConsum';
 
 interface AlertaCantitateInsuficientaProps {
-    bun: {
-        id_bun: number;
-        nume_bun: string;
-        cantitate_disponibila: number | string;
-        cantitate_necesara: number | string;
-    };
+    bun: BunInsuficient
     onConfirm: () => void;
     onCancel: () => void;
 }
+
 
 const ConsumAlertaCantitateInsuficienta: React.FC<AlertaCantitateInsuficientaProps> = ({
     bun,
@@ -30,12 +28,12 @@ const ConsumAlertaCantitateInsuficienta: React.FC<AlertaCantitateInsuficientaPro
 
     // Calculate deficit amount
     const getDeficit = (): string => {
-        const available = typeof bun.cantitate_disponibila === 'string'
-            ? parseFloat(bun.cantitate_disponibila)
-            : bun.cantitate_disponibila;
+        const available = typeof bun.bun.getCantitateDisponibila?.() === 'string'
+            ? parseFloat(bun.bun.getCantitateDisponibila?.().toString())
+            : bun.bun.getCantitateDisponibila?.();
 
         const needed = typeof bun.cantitate_necesara === 'string'
-            ? parseFloat(bun.cantitate_necesara)
+            ? parseFloat(bun.cantitate_necesara.toString())
             : bun.cantitate_necesara;
 
         return formatNumber(needed - available);
@@ -96,10 +94,10 @@ const ConsumAlertaCantitateInsuficienta: React.FC<AlertaCantitateInsuficientaPro
                             </div>
 
                             <div className="bg-white p-2 border border-gray-300 rounded-bl-md">
-                                <span className="font-medium">{bun.nume_bun}</span>
+                                <span className="font-medium">{bun?.bun.getNume?.()}</span>
                             </div>
                             <div className="bg-white p-2 border border-gray-300 text-red-600 font-bold">
-                                {formatNumber(bun.cantitate_disponibila)}
+                                {formatNumber(bun?.bun.getCantitateDisponibila?.())}
                             </div>
                             <div className="bg-white p-2 border border-gray-300 rounded-br-md font-bold">
                                 {formatNumber(bun.cantitate_necesara)}

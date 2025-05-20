@@ -1,31 +1,36 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-//import { StatusCerere } from "@prisma/client";
-import { CerereAprovizionare } from "@/lib/classes/CerereAprovizionare";
+// app/api/cerere-aprovizionare/route.ts
+
+import { NextResponse } from "next/server";
+import { CerereAprovizionareService } from "@/lib/services/CerereAprovizionareService";
+import { StatusCerere } from "@/lib/classes/CerereAprovizionare";
+
+const service = new CerereAprovizionareService();
 
 export async function GET() {
     try {
-        const cereriAprov = await prisma.cerereAprovizionare.findMany();
-
-        return NextResponse.json(cereriAprov.map(CerereAprovizionare.fromPrisma), { status: 200 });
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: "Eroare server" }, { status: 500 });
-
+        const cereri = await service.getAll();
+        return NextResponse.json(cereri);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(req: Request) {
     try {
-
-        const body = await request.json();
-        const cerereAprov = await CerereAprovizionare.createFromInput(body, prisma);
-
-        return NextResponse.json(CerereAprovizionare.fromPrisma(cerereAprov), { status: 201 });
-
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: "Eroare server" }, { status: 500 });
-
+        const body = await req.json();
+        const cerere = await service.creeazaCerere({
+            id_gestiune: body.id_gestiune,
+            valoare: Number(body.valoare),
+            status: body.status in StatusCerere ? body.status : StatusCerere.IN_ASTEPTARE,
+            linii: body.linii.map((linie: any) => ({
+                id_bun: linie.id_bun,
+                cantitate: linie.cantitate,
+                valoare: linie.valoare,
+                observatii: linie.observatii ?? null
+            }))
+        });
+        return NextResponse.json(cerere, { status: 201 });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }

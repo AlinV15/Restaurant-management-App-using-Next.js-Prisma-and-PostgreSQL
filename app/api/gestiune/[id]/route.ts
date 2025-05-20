@@ -1,49 +1,40 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { parse } from "path";
-import { Gestiune } from "@/lib/classes/Gestiune";
+// app/api/gestiune/[id]/route.ts
 
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+import { NextResponse } from "next/server";
+import { GestiuneService } from "@/lib/services/GestiuneService";
+
+const service = new GestiuneService();
+
+export async function GET(_: Request, context: { params: { id: string } }) {
   try {
-    const { id } = await context.params;
-    const idNumeric = parseInt(id);
-    if (isNaN(idNumeric)) {
-      return NextResponse.json({ error: "ID invalid" }, { status: 404 });
-    }
-    const body = await req.json();
-    const { denumire, id_gestionar } = body;
-    if (!denumire || !id_gestionar) {
-      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
-    }
-
-
-    const updatedProduct = await prisma.gestiune.update({
-      where: { id_gestiune: idNumeric },
-      data: {
-        denumire,
-        id_gestionar: Number(id_gestionar),
-      },
-    });
-
-    return NextResponse.json(Gestiune.fromPrisma(updatedProduct), { status: 200 });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to update product" }, { status: 500 });
+    const id = parseInt(context.params.id);
+    const gestiune = await service.getById(id);
+    return NextResponse.json(gestiune);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 404 });
   }
 }
 
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+export async function PUT(req: Request, context: { params: { id: string } }) {
   try {
-    const { id } = await context.params;
-    const idNumeric = parseInt(id);
-    if (isNaN(idNumeric)) {
-      return NextResponse.json({ error: "ID invalid" }, { status: 404 });
-    }
-    const deletedProduct = await prisma.gestiune.delete({
-      where: { id_gestiune: idNumeric },
+    const id = parseInt(context.params.id);
+    const body = await req.json();
+    const updated = await service.updateGestiune(id, {
+      denumire: body.denumire,
+      id_gestionar: body.id_gestionar ?? null
     });
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+}
 
-    return NextResponse.json(Gestiune.fromPrisma(deletedProduct), { status: 200 });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
+export async function DELETE(_: Request, context: { params: { id: string } }) {
+  try {
+    const id = parseInt(context.params.id);
+    await service.deleteGestiune(id);
+    return NextResponse.json({ message: "Gestiune ștearsă." });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 400 });
   }
 }

@@ -1,30 +1,41 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { LinieCerereAprovizionare } from "@/lib/classes/LinieCerereAprovizionare";
+// app/api/linie-cerere-aprovizionare/[id]/route.ts
 
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+import { NextResponse } from "next/server";
+import { LinieCerereAprovizionareService } from "@/lib/services/LinieCerereAprovizionareService";
+
+const service = new LinieCerereAprovizionareService();
+
+export async function GET(_: Request, context: { params: { id: string } }) {
     try {
-        const { id } = context.params;
-        const data = await req.json();
-
-        const updatedLinieCerereAprovizionare = await LinieCerereAprovizionare.updateInDB(prisma, id, data);
-
-        return NextResponse.json(LinieCerereAprovizionare.fromPrisma(updatedLinieCerereAprovizionare), { status: 200 });
-    } catch (error) {
-        console.error("Error updating data:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        const id = parseInt(context.params.id);
+        const linie = await service.getById(id);
+        return NextResponse.json(linie);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 404 });
     }
 }
 
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
-    const { id } = context.params;
-
+export async function PUT(req: Request, context: { params: { id: string } }) {
     try {
-        await LinieCerereAprovizionare.deleteFromDB(prisma, id);
+        const id = parseInt(context.params.id);
+        const body = await req.json();
+        const updated = await service.updateLinie(id, {
+            cantitate: body.cantitate,
+            valoare: body.valoare,
+            observatii: body.observatii ?? null
+        });
+        return NextResponse.json(updated);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+}
 
-        return NextResponse.json({ message: "Linie Cerere Aprovizionare deleted successfully" }, { status: 200 });
-    } catch (error) {
-        console.error("Error deleting data:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+export async function DELETE(_: Request, context: { params: { id: string } }) {
+    try {
+        const id = parseInt(context.params.id);
+        await service.deleteLinie(id);
+        return NextResponse.json({ message: "Linie ștearsă." });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }

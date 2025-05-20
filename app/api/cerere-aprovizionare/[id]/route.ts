@@ -1,29 +1,41 @@
-import { NextResponse, NextRequest } from "next/server";
-import prisma from "@/lib/prisma";
-import { CerereAprovizionare } from "@/lib/classes/CerereAprovizionare";
+// app/api/cerere-aprovizionare/[id]/route.ts
 
+import { NextResponse } from "next/server";
+import { CerereAprovizionareService } from "@/lib/services/CerereAprovizionareService";
+import { StatusCerere } from "@/lib/classes/CerereAprovizionare";
 
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+const service = new CerereAprovizionareService();
+
+export async function GET(_: Request, context: { params: { id: string } }) {
     try {
-        const { id } = await context.params;
-
-        const body = await req.json();
-        const cerereAprov = await CerereAprovizionare.updateStatusCerere(body, id, prisma);
-
-        return NextResponse.json(CerereAprovizionare.fromPrisma(cerereAprov), { status: 200 });
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: "Eroare server" }, { status: 500 });
+        const id = parseInt(context.params.id);
+        const cerere = await service.getById(id);
+        return NextResponse.json(cerere);
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 404 });
     }
 }
 
-export async function DELETE(req: NextRequest, context: { params: { id: string } }) {
+export async function PUT(req: Request, context: { params: { id: string } }) {
     try {
-        const { id } = await context.params;
-        await CerereAprovizionare.stergere(id, prisma);
-        return NextResponse.json("Document sters cu succes", { status: 200 });
-    } catch (error) {
-        console.log(error);
-        return NextResponse.json({ error: "Eroare server" }, { status: 500 });
+        const id = parseInt(context.params.id);
+        const { status } = await req.json();
+        if (!status || !(status in StatusCerere)) {
+            throw new Error("Status invalid.");
+        }
+        await service.schimbaStatus(id, status);
+        return NextResponse.json({ message: "Status actualizat." });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+}
+
+export async function DELETE(_: Request, context: { params: { id: string } }) {
+    try {
+        const id = parseInt(context.params.id);
+        await service.stergeCerere(id);
+        return NextResponse.json({ message: "Cerere ștearsă." });
+    } catch (error: any) {
+        return NextResponse.json({ error: error.message }, { status: 400 });
     }
 }
